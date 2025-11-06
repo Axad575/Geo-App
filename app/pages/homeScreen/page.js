@@ -20,7 +20,17 @@ export default function Home() {
     const [orgId, setOrgId] = useState(null);
     const [orgName, setOrgName] = useState('');
     const [loading, setLoading] = useState(true);
-    const { t } = useStrings();
+    const { t, language } = useStrings();
+
+    // Получаем локаль для форматирования даты в зависимости от языка
+    const getLocale = () => {
+        switch (language) {
+            case 'ru': return 'ru-RU';
+            case 'en': return 'en-GB';
+            case 'uz': return 'uz-UZ';
+            default: return 'en-GB';
+        }
+    };
 
     // Получение текущей организации пользователя
     const getCurrentUserOrg = async (userId) => {
@@ -161,14 +171,14 @@ export default function Home() {
     }, []);
 
     const formatDate = (date) => {
-        return new Date(date).toLocaleDateString('en-GB', {
+        return new Date(date).toLocaleDateString(getLocale(), {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
         });
     };
 
-    const today = new Date().toLocaleDateString(t.dateFormat, {
+    const today = new Date().toLocaleDateString(getLocale(), {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',

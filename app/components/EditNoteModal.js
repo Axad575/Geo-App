@@ -3,12 +3,22 @@ import { useState, useEffect } from 'react';
 import { useStrings } from "@/app/hooks/useStrings";
 
 const EditNoteModal = ({ isOpen, onClose, onSubmit, note }) => {
-    const { t } = useStrings();
+    const { t, language } = useStrings();
     const [formData, setFormData] = useState({
         title: '',
         content: '',
         category: ''
     });
+
+    // Получаем локаль для форматирования даты в зависимости от языка
+    const getLocale = () => {
+        switch (language) {
+            case 'ru': return 'ru-RU';
+            case 'en': return 'en-GB';
+            case 'uz': return 'uz-UZ';
+            default: return 'en-GB';
+        }
+    };
 
     const getCategories = () => [
         { key: 'personal', label: t('notes.categories.personal') },
@@ -84,7 +94,7 @@ const EditNoteModal = ({ isOpen, onClose, onSubmit, note }) => {
     const formatDate = (dateString) => {
         if (!dateString) return '';
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
+        return date.toLocaleDateString(getLocale(), {
             year: 'numeric',
             month: 'long',
             day: 'numeric',

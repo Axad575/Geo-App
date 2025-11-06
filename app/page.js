@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { getAnalytics } from "firebase/analytics";
@@ -13,10 +13,20 @@ import { useStrings } from "./hooks/useStrings";
 export default function Home() {
   const router = useRouter();
   const auth = getAuth(app);
-  const analytics = getAnalytics(app);
+  
   const { t } = useStrings();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Проверяем, что мы в браузере
+    if (typeof window !== "undefined") {
+      import("firebase/analytics").then(({ getAnalytics }) => {
+        const analytics = getAnalytics(app);
+        console.log("Firebase Analytics initialized:", analytics);
+      });
+    }
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();

@@ -175,7 +175,13 @@ const strings = {
             enterMeetingLocation: "Введите место встречи",
             addMeetingNotes: "Добавьте заметки или повестку встречи...",
             noStatus: "Без статуса",
-            organizer: "Организатор"
+            organizer: "Организатор",
+            addToCalendar: "Добавить в календарь",
+            googleCalendar: "Google Calendar",
+            outlookCalendar: "Outlook",
+            appleCalendar: "Apple Calendar",
+            downloadICS: "Скачать ICS файл",
+            calendarAdded: "Встреча добавлена в календарь",
         },
         
         // Локации
@@ -612,7 +618,13 @@ const strings = {
             createMeeting: "Create Meeting",
             enterMeetingLocation: "Enter meeting location",
             addMeetingNotes: "Add meeting notes or agenda...",
-            noStatus: "No Status"
+            noStatus: "No Status",
+            addToCalendar: "Add to Calendar",
+            googleCalendar: "Google Calendar", 
+            outlookCalendar: "Outlook",
+            appleCalendar: "Apple Calendar",
+            downloadICS: "Download ICS file",
+            calendarAdded: "Meeting added to calendar",
         },
         
         // Locations
@@ -1049,7 +1061,13 @@ const strings = {
             createMeeting: "Uchrashv yaratish",
             enterMeetingLocation: "Uchrashv joyini kiriting",
             addMeetingNotes: "Uchrashv eslatmalari yoki kun tartibini qo'shing...",
-            noStatus: "Holatsiz"
+            noStatus: "Holatsiz",
+            addToCalendar: "Kalendariga qo'shish",
+            googleCalendar: "Google Calendar",
+            outlookCalendar: "Outlook", 
+            appleCalendar: "Apple Calendar",
+            downloadICS: "ICS faylini yuklab olish",
+            calendarAdded: "Uchrashuv kalendariga qo'shildi",
         },
         
         // Joylashuvlar

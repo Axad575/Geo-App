@@ -2,18 +2,29 @@
 import { useStrings } from "@/app/hooks/useStrings";
 
 const MeetingCard = ({ meeting }) => {
-    const { t } = useStrings();
+    const { t, language } = useStrings();
+    
+    // Получаем локаль для форматирования даты в зависимости от языка
+    const getLocale = () => {
+        switch (language) {
+            case 'ru': return 'ru-RU';
+            case 'en': return 'en-GB';
+            case 'uz': return 'uz-UZ';
+            default: return 'en-GB';
+        }
+    };
+    
     const formatDateTime = (datetime) => {
         if (!datetime) return '';
         try {
             const date = new Date(datetime);
             return {
-                date: date.toLocaleDateString('en-GB', {
+                date: date.toLocaleDateString(getLocale(), {
                     day: '2-digit',
                     month: '2-digit',
                     year: 'numeric'
                 }),
-                time: date.toLocaleTimeString('en-GB', {
+                time: date.toLocaleTimeString(getLocale(), {
                     hour: '2-digit',
                     minute: '2-digit'
                 })

@@ -11,8 +11,18 @@ import html2canvas from 'html2canvas';
 import { useStrings } from "@/app/hooks/useStrings";
 
 const ProjectPage = ({ projectId, orgId }) => {
-    const { t } = useStrings();
+    const { t, language } = useStrings();
     const auth = getAuth(app);
+
+    // Получаем локаль для форматирования даты в зависимости от языка
+    const getLocale = () => {
+        switch (language) {
+            case 'ru': return 'ru-RU';
+            case 'en': return 'en-GB';
+            case 'uz': return 'uz-UZ';
+            default: return 'en-GB';
+        }
+    };
     const router = useRouter();
     const [project, setProject] = useState(null);
     const [users, setUsers] = useState({});
@@ -214,7 +224,7 @@ const ProjectPage = ({ projectId, orgId }) => {
             // Дата создания отчета
             pdf.setFontSize(10);
             pdf.setFont('helvetica', 'normal');
-            pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, margin, yPosition);
+            pdf.text(`Generated on: ${new Date().toLocaleDateString(getLocale())}`, margin, yPosition);
             yPosition += 15;
 
             // Описание проекта
@@ -379,7 +389,7 @@ const ProjectPage = ({ projectId, orgId }) => {
     const formatDate = (date) => {
         if (!date) return '';
         try {
-            return new Date(date).toLocaleDateString('en-GB', {
+            return new Date(date).toLocaleDateString(getLocale(), {
                 day: '2-digit',
                 month: '2-digit',
                 year: 'numeric'

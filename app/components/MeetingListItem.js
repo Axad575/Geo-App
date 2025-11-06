@@ -1,20 +1,31 @@
 "use client";
 import { useStrings } from "../hooks/useStrings";
+import CalendarDropdown from "./CalendarDropdown";
 
 const MeetingListItem = ({ meeting, users }) => {
-    const { t } = useStrings();
+    const { t, language } = useStrings();
+
+    // Получаем локаль для форматирования даты в зависимости от языка
+    const getLocale = () => {
+        switch (language) {
+            case 'ru': return 'ru-RU';
+            case 'en': return 'en-GB';
+            case 'uz': return 'uz-UZ';
+            default: return 'en-GB';
+        }
+    };
 
     const formatDateTime = (datetime) => {
         if (!datetime) return '';
         try {
             const date = new Date(datetime);
             return {
-                date: date.toLocaleDateString('en-GB', {
+                date: date.toLocaleDateString(getLocale(), {
                     day: '2-digit',
                     month: '2-digit',
                     year: 'numeric'
                 }),
-                time: date.toLocaleTimeString('en-GB', {
+                time: date.toLocaleTimeString(getLocale(), {
                     hour: '2-digit',
                     minute: '2-digit'
                 })
@@ -37,6 +48,7 @@ const MeetingListItem = ({ meeting, users }) => {
                             <span className="text-sm font-semibold text-blue-600">{time}</span>
                         </div>
                     </div>
+                    <CalendarDropdown meeting={meeting} />
                 </div>
 
                 {meeting.location && (

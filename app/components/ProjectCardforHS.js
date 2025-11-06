@@ -3,8 +3,18 @@ import { useRouter } from 'next/navigation';
 import { useStrings } from "@/app/hooks/useStrings";
 
 const ProjectCard = ({ project }) => {
-    const { t } = useStrings();
+    const { t, language } = useStrings();
     const router = useRouter();
+    
+    // Получаем локаль для форматирования даты в зависимости от языка
+    const getLocale = () => {
+        switch (language) {
+            case 'ru': return 'ru-RU';
+            case 'en': return 'en-GB';
+            case 'uz': return 'uz-UZ';
+            default: return 'en-GB';
+        }
+    };
     
     const getStatusColor = (status) => {
         switch (status?.toLowerCase()) {
@@ -22,7 +32,7 @@ const ProjectCard = ({ project }) => {
     const formatDate = (date) => {
         if (!date) return '';
         try {
-            return new Date(date).toLocaleDateString('en-GB', {
+            return new Date(date).toLocaleDateString(getLocale(), {
                 day: '2-digit',
                 month: '2-digit',
                 year: 'numeric'
