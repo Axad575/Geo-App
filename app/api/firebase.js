@@ -1,8 +1,11 @@
-
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
 import { getAnalytics, isSupported } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
+
+
 
 // Проверяем наличие переменных окружения
 if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
@@ -26,6 +29,12 @@ const app = initializeApp(firebaseConfig);
 // Initialize Cloud Firestore and get a reference to the service
 const db = getFirestore(app);
 
+// Initialize Firebase Authentication and get a reference to the service
+const auth = getAuth(app);
+
+// Initialize Cloud Storage and get a reference to the service
+const storage = getStorage(app);
+
 // Initialize Analytics only on client side and if supported
 let analytics = null;
 if (typeof window !== 'undefined') {
@@ -38,4 +47,4 @@ if (typeof window !== 'undefined') {
   });
 }
 
-export { app, db, analytics };
+export { app, db, auth, storage, analytics };

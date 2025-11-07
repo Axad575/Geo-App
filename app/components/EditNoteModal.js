@@ -9,6 +9,8 @@ const EditNoteModal = ({ isOpen, onClose, onSubmit, note }) => {
         content: '',
         category: ''
     });
+    const [attachedFiles, setAttachedFiles] = useState(note?.attachments || []);
+    const [uploadingFiles, setUploadingFiles] = useState(false);
 
     // Получаем локаль для форматирования даты в зависимости от языка
     const getLocale = () => {
@@ -38,6 +40,7 @@ const EditNoteModal = ({ isOpen, onClose, onSubmit, note }) => {
                 content: note.content || '',
                 category: note.category || ''
             });
+            setAttachedFiles(note.attachments || []);
         }
     }, [note]);
 
@@ -49,6 +52,7 @@ const EditNoteModal = ({ isOpen, onClose, onSubmit, note }) => {
                 content: '',
                 category: ''
             });
+            setAttachedFiles([]);
         }
     }, [isOpen]);
 
@@ -81,7 +85,7 @@ const EditNoteModal = ({ isOpen, onClose, onSubmit, note }) => {
             return;
         }
 
-        onSubmit(note.id, formData);
+        onSubmit(note.id, { ...formData, attachments: attachedFiles });
     };
 
     const handleInputChange = (field, value) => {
@@ -101,6 +105,23 @@ const EditNoteModal = ({ isOpen, onClose, onSubmit, note }) => {
             hour: '2-digit',
             minute: '2-digit'
         });
+    };
+
+    const handleFileChange = (e) => {
+        const files = Array.from(e.target.files);
+        setAttachedFiles(prev => [...prev, ...files]);
+    };
+
+    const handleRemoveFile = (fileName) => {
+        setAttachedFiles(prev => prev.filter(file => file.name !== fileName));
+    };
+
+    const handleUploadFiles = () => {
+        setUploadingFiles(true);
+        // Здесь должна быть логика загрузки файлов
+        setTimeout(() => {
+            setUploadingFiles(false);
+        }, 2000);
     };
 
     if (!isOpen || !note) return null;
@@ -193,6 +214,53 @@ const EditNoteModal = ({ isOpen, onClose, onSubmit, note }) => {
                         />
                         <div className="text-right text-xs text-gray-500 mt-1">
                             {formData.content.length}/5000
+                        </div>
+                    </div>
+
+                    {/* File Attachments */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            {t('notes.attachFiles')}
+                        </label>
+                        <div className="flex flex-col gap-2">
+                            {attachedFiles.length === 0 && (
+                                <span className="text-gray-500 text-sm">{t('notes.noFilesAttached')}</span>
+                            )}
+                            {attachedFiles.map((file, index) => (
+                                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                                    <div className="flex items-center gap-2">
+                                        <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 2a2 2 0 00-2 2v8H8a2 2 0 000 4h2v8a2 2 0 004 0v-8h2a2 2 0 000-4h-2V4a2 2 0 00-2-2z" />
+                                        </svg>
+                                        <span className="text-sm font-medium text-gray-900">{file.name}</span>
+                                    </div>
+                                    <button
+                                        onClick={() => handleRemoveFile(file.name)}
+                                        className="text-red-600 hover:text-red-800 transition-colors"
+                                        type="button"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex items-center gap-2 mt-3">
+                            <label className="flex items-center cursor-pointer">
+                                <input
+                                    type="file"
+                                    multiple
+                                    onChange={handleFileChange}
+                                    className="hidden"
+                                />
+                                <span className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+                                    {t('notes.uploadFiles')}
+                                </span>
+                            </label>
+                            {uploadingFiles && (
+                                <span className="text-sm text-gray-500">{t('notes.uploadingFiles')}</span>
+                            )}
                         </div>
                     </div>
 

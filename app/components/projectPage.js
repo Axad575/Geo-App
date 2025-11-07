@@ -2,8 +2,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAuth } from 'firebase/auth';
-import { app, db } from '@/app/api/firebase';
+import { app, db, storage } from '@/app/api/firebase';
 import { doc, getDoc, updateDoc, arrayUnion, collection, addDoc, getDocs } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { uploadNoteFile } from '@/app/utils/fileStorage';
 import AddLocationModal from './AddLocationModal';
 import InteractiveMap from './InteractiveMap';
 import jsPDF from 'jspdf';
@@ -35,6 +37,8 @@ const ProjectPage = ({ projectId, orgId }) => {
     const [showAddNote, setShowAddNote] = useState(false);
     const [showAddLocation, setShowAddLocation] = useState(false);
     const [selectedMapLocation, setSelectedMapLocation] = useState(null);
+    const [attachedFiles, setAttachedFiles] = useState([]);
+    const [uploadingFiles, setUploadingFiles] = useState(false);
 
     // Получение данных проекта
     const fetchProject = async () => {
@@ -73,49 +77,124 @@ const ProjectPage = ({ projectId, orgId }) => {
         }
     }, [projectId, orgId]);
 
-    // Добавление новой заметки
-    const handleAddNote = async () => {
-        if (!newNote.title.trim()) return;
 
-        try {
-            // Найти выбранную локацию
-            const selectedLocation = newNote.locationId 
-                ? project.locations?.find(loc => loc.id === newNote.locationId)
-                : null;
+// Функция загрузки файла
+const uploadProjectFile = async (file, projectId, noteId) => {
+    try {
+        const timestamp = Date.now();
+        const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const path = `projects/${projectId}/notes/${noteId}/files/${timestamp}_${sanitizedName}`;
+        
+        const fileRef = ref(storage, path);
+        const snapshot = await uploadBytes(fileRef, file);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        
+        return {
+            url: downloadURL,
+            path: path,
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            uploadedAt: new Date().toISOString(),
+            uploadedBy: auth.currentUser?.uid
+        };
+    } catch (error) {
+        console.error('Error uploading file:', error);
+        throw error;
+    }
+};
 
-            const noteData = {
-                id: Date.now().toString(), // Временный ID
-                title: newNote.title,
-                description: newNote.description,
-                author: auth.currentUser?.uid,
-                authorName: users[auth.currentUser?.uid] || auth.currentUser?.email,
-                createdAt: new Date().toISOString(),
-                location: selectedLocation ? {
-                    id: selectedLocation.id,
-                    name: selectedLocation.name,
-                    latitude: selectedLocation.latitude,
-                    longitude: selectedLocation.longitude
-                } : null
-            };
-
-            // Добавляем заметку в массив notes проекта
-            const projectRef = doc(db, `organizations/${orgId}/projects/${projectId}`);
-            await updateDoc(projectRef, {
-                notes: arrayUnion(noteData)
-            });
-
-            // Обновляем локальное состояние
-            setProject(prev => ({
-                ...prev,
-                notes: [...(prev.notes || []), noteData]
-            }));
-
-            setNewNote({ title: '', description: '', locationId: '' });
-            setShowAddNote(false);
-        } catch (error) {
-            console.error('Error adding note:', error);
+// Функция для обработки выбора файлов
+const handleFileSelect = async (files) => {
+    if (!files || files.length === 0) return;
+    
+    setUploadingFiles(true);
+    const uploadedFiles = [];
+    
+    try {
+        for (const file of Array.from(files)) {
+            // Проверка размера файла (максимум 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert(`Файл ${file.name} слишком большой. Максимум 10MB.`);
+                continue;
+            }
+            
+            // Создаем временный ID для заметки
+            const tempNoteId = Date.now().toString();
+            
+            const uploadedFile = await uploadProjectFile(
+                file, 
+                projectId, 
+                tempNoteId
+            );
+            
+            uploadedFiles.push(uploadedFile);
         }
-    };
+        
+        setAttachedFiles(prev => [...prev, ...uploadedFiles]);
+        alert(`Загружено файлов: ${uploadedFiles.length}`);
+    } catch (error) {
+        console.error('File upload error:', error);
+        alert('Ошибка загрузки файлов');
+    } finally {
+        setUploadingFiles(false);
+    }
+};
+
+// Функция удаления файла
+const removeFile = (index) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+};
+
+
+
+    // Добавление новой заметки
+    // Обновите функцию handleAddNote:
+const handleAddNote = async () => {
+    if (!newNote.title.trim()) return;
+
+    try {
+        // Найти выбранную локацию
+        const selectedLocation = newNote.locationId 
+            ? project.locations?.find(loc => loc.id === newNote.locationId)
+            : null;
+
+        const noteData = {
+            id: Date.now().toString(),
+            title: newNote.title,
+            description: newNote.description,
+            author: auth.currentUser?.uid,
+            authorName: users[auth.currentUser?.uid] || auth.currentUser?.email,
+            createdAt: new Date().toISOString(),
+            location: selectedLocation ? {
+                id: selectedLocation.id,
+                name: selectedLocation.name,
+                latitude: selectedLocation.latitude,
+                longitude: selectedLocation.longitude
+            } : null,
+            attachments: attachedFiles // Добавляем прикрепленные файлы
+        };
+
+        // Добавляем заметку в массив notes проекта
+        const projectRef = doc(db, `organizations/${orgId}/projects/${projectId}`);
+        await updateDoc(projectRef, {
+            notes: arrayUnion(noteData)
+        });
+
+        // Обновляем локальное состояние
+        setProject(prev => ({
+            ...prev,
+            notes: [...(prev.notes || []), noteData]
+        }));
+
+        // Очищаем форму
+        setNewNote({ title: '', description: '', locationId: '' });
+        setAttachedFiles([]); // Очищаем прикрепленные файлы
+        setShowAddNote(false);
+    } catch (error) {
+        console.error('Error adding note:', error);
+    }
+};
 
     // Добавление новой точки на карту
     const handleAddLocation = async (locationData) => {
@@ -539,6 +618,74 @@ const ProjectPage = ({ projectId, orgId }) => {
                                             </p>
                                         )}
                                     </div>
+
+                                    {/* File Upload Section */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            📎 Прикрепить файлы
+                                        </label>
+                                        
+                                        {/* File Drop Zone */}
+                                        <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center">
+                                            <input
+                                                type="file"
+                                                multiple
+                                                id="file-upload"
+                                                className="hidden"
+                                                onChange={(e) => handleFileSelect(e.target.files)}
+                                                accept="image/*,application/pdf,.doc,.docx,.txt,.csv,.kml,.gpx"
+                                            />
+                                            
+                                            <label htmlFor="file-upload" className="cursor-pointer">
+                                                <div className="space-y-2">
+                                                    <svg className="w-8 h-8 mx-auto text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                                    </svg>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                        {uploadingFiles ? 'Загрузка файлов...' : 'Нажмите или перетащите файлы сюда'}
+                                                    </p>
+                                                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                                                        Поддержка: изображения, PDF, документы, геоданные (максимум 10MB)
+                                                    </p>
+                                                </div>
+                                            </label>
+                                        </div>
+
+                                        {/* Attached Files List */}
+                                        {attachedFiles.length > 0 && (
+                                            <div className="mt-3 space-y-2">
+                                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                    Прикрепленные файлы ({attachedFiles.length}):
+                                                </p>
+                                                {attachedFiles.map((file, index) => (
+                                                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                                                        <div className="flex items-center space-x-2">
+                                                            <span className="text-sm">
+                                                                {file.type.startsWith('image/') ? '🖼️' : 
+                                                                 file.type.includes('pdf') ? '📄' : 
+                                                                 file.name.endsWith('.kml') ? '🗺️' : '📎'}
+                                                            </span>
+                                                            <div>
+                                                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                                    {file.name}
+                                                                </p>
+                                                                <p className="text-xs text-gray-500">
+                                                                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeFile(index)}
+                                                            className="text-red-500 hover:text-red-700 text-sm"
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div className="flex gap-2 mt-4">
@@ -594,6 +741,14 @@ const ProjectPage = ({ projectId, orgId }) => {
                                                             </div>
                                                         </div>
                                                     )}
+                                                    {note.attachments && note.attachments.length > 0 && (
+                                                        <div className="mt-2 flex items-center space-x-2">
+                                                            <span className="text-xs text-gray-500">📎</span>
+                                                            <span className="text-xs text-gray-500">
+                                                                {note.attachments.length} {t('files.filesAttached')}
+                                                            </span>
+                                                        </div>
+                                                    )}
                                                     <div className="flex items-center gap-2 text-sm text-gray-500">
                                                         <span>{note.authorName}</span>
                                                         <span>•</span>
@@ -601,6 +756,50 @@ const ProjectPage = ({ projectId, orgId }) => {
                                                     </div>
                                                 </div>
                                             </div>
+
+                                            {/* Здесь уже есть отображение заголовка и описания заметки */}
+                                            <h4 className="font-medium text-gray-900 dark:text-gray-100">
+                                                {note.title}
+                                            </h4>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                                {note.description}
+                                            </p>
+                                            
+                                            {/* ДОБАВЬТЕ ЭТОТ КОД СЮДА - для отображения файлов */}
+                                            {note.attachments && note.attachments.length > 0 && (
+                                                <div className="mt-2">
+                                                    <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                        📎 Прикрепленные файлы ({note.attachments.length}):
+                                                    </h5>
+                                                    <div className="space-y-1">
+                                                        {note.attachments.map((file, fileIndex) => (
+                                                            <div key={fileIndex} className="flex items-center justify-between p-2 bg-gray-100 dark:bg-gray-600 rounded text-xs">
+                                                                <div className="flex items-center space-x-2">
+                                                                    <span>
+                                                                        {file.type.startsWith('image/') ? '🖼️' : 
+                                                                         file.type.includes('pdf') ? '📄' : 
+                                                                         file.name.endsWith('.kml') ? '🗺️' : '📎'}
+                                                                    </span>
+                                                                    <span className="text-gray-700 dark:text-gray-300">{file.name}</span>
+                                                                    <span className="text-gray-500">
+                                                                        ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                                                                    </span>
+                                                                </div>
+                                                                <a
+                                                                    href={file.url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="text-blue-600 hover:text-blue-800 text-xs"
+                                                                >
+                                                                    Посмотреть
+                                                                </a>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            
+                                            {/* Остальная информация о заметке (автор, дата и т.д.) */}
                                         </div>
                                     ))}
                                 </div>

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
@@ -88,10 +88,12 @@ const InteractiveMap = ({
   const { t } = useStrings();
   const [isClient, setIsClient] = useState(false);
   const [tempMarker, setTempMarker] = useState(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Убеждаемся, что карта рендерится только на клиенте
   useEffect(() => {
     setIsClient(true);
+    setIsMounted(true);
   }, []);
 
   const handleMapClick = (latlng) => {
@@ -106,13 +108,13 @@ const InteractiveMap = ({
     setTempMarker(null);
   }, [locations]);
 
-  if (!isClient) {
+  if (!isMounted) {
     return (
-      <div 
-        style={{ height, backgroundColor: '#f0f0f0' }}
-        className="flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300"
-      >
-        <p className="text-gray-500">{t('map.loadingMap')}</p>
+      <div className="flex items-center justify-center bg-gray-100 rounded-lg" style={{ height }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">{t('map.loadingMap')}</p>
+        </div>
       </div>
     );
   }

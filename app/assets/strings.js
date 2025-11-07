@@ -111,7 +111,7 @@ const strings = {
             noFiles: "В библиотеке пока нет файлов",
             uploadFirst: "Загрузите первый файл для начала работы",
             fileName: "Имя файла",
-            fileSize: "Размер",
+            fileSize: "Размер файла",
             uploadDate: "Дата загрузки",
             actions: "Действия",
             download: "Скачать",
@@ -442,7 +442,36 @@ const strings = {
             deleteConfirm: "Вы уверены, что хотите удалить?",
             deleteSuccess: "Удалено успешно",
             deleteError: "Ошибка удаления"
-        }
+        },
+        
+        // Файлы
+        files: {
+            title: "Файлы",
+            uploadFile: "Загрузить файл",
+            uploadImage: "Загрузить изображение", 
+            selectFile: "Выберите файл",
+            fileName: "Имя файла",
+            fileSize: "Размер файла",
+            uploadDate: "Дата загрузки",
+            downloadFile: "Скачать файл",
+            deleteFile: "Удалить файл",
+            noFiles: "Нет файлов",
+            uploadSuccess: "Файл успешно загружен",
+            uploadError: "Ошибка загрузки файла",
+            fileTooLarge: "Файл слишком большой",
+            fileTypeNotAllowed: "Тип файла не поддерживается",
+            attachments: "Вложения",
+            attachFile: "Прикрепить файл",
+            removeFile: "Удалить файл",
+            filesAttached: "файлов прикреплено",
+        },
+        
+        // Вложения
+        attachments: "Вложения",
+        attachFile: "Прикрепить файл",
+        removeFile: "Удалить файл",
+        filesAttached: "файлов прикреплено",
+
     },
     
     en: {
@@ -885,7 +914,36 @@ const strings = {
             deleteConfirm: "Are you sure you want to delete?",
             deleteSuccess: "Deleted successfully",
             deleteError: "Delete error"
-        }
+        },
+        
+        // Files
+        files: {
+            title: "Files",
+            uploadFile: "Upload file",
+            uploadImage: "Upload image",
+            selectFile: "Select file", 
+            fileName: "File name",
+            fileSize: "File size",
+            uploadDate: "Upload date",
+            downloadFile: "Download file",
+            deleteFile: "Delete file",
+            noFiles: "No files",
+            uploadSuccess: "File uploaded successfully",
+            uploadError: "File upload error",
+            fileTooLarge: "File too large",
+            fileTypeNotAllowed: "File type not supported",
+            attachments: "Attachments",
+            attachFile: "Attach file",
+            removeFile: "Remove file",
+            filesAttached: "files attached", 
+        },
+        
+        // Вложения
+        attachments: "Attachments",
+        attachFile: "Attach file",
+        removeFile: "Remove file",
+        filesAttached: "files attached",
+
     },
     
     uz: {
@@ -1328,7 +1386,35 @@ const strings = {
             deleteConfirm: "O'chirishni xohlaysizmi?",
             deleteSuccess: "Muvaffaqiyatli o'chirildi",
             deleteError: "O'chirish xatosi"
-        }
+        },
+        
+        // Fayllar
+        files: {
+            title: "Fayllar",
+            uploadFile: "Fayl yuklash",
+            uploadImage: "Rasm yuklash",
+            selectFile: "Fayl tanlash",
+            fileName: "Fayl nomi", 
+            fileSize: "Fayl hajmi",
+            uploadDate: "Yuklash sanasi",
+            downloadFile: "Faylni yuklab olish",
+            deleteFile: "Faylni o'chirish",
+            noFiles: "Fayllar yo'q",
+            uploadSuccess: "Fayl muvaffaqiyatli yuklandi",
+            uploadError: "Fayl yuklashda xatolik",
+            fileTooLarge: "Fayl juda katta",
+            fileTypeNotAllowed: "Fayl turi qo'llab-quvvatlanmaydi",
+            attachments: "Biriktirmalar",
+            attachFile: "Fayl biriktirish",
+            removeFile: "Faylni olib tashlash",
+            filesAttached: "fayl biriktirilgan",
+        },
+        
+        // Вложения
+        attachments: "Biriktirmalar",
+        attachFile: "Fayl biriktirish", 
+        removeFile: "Faylni olib tashlash",
+        filesAttached: "fayl biriktirilgan"
     }
 };
 

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { useStrings } from "@/app/hooks/useStrings";
+import { uploadNoteFile } from '@/app/utils/fileStorage';
 
 const CreateNoteModal = ({ isOpen, onClose, onSubmit }) => {
     const { t } = useStrings();
@@ -9,6 +10,8 @@ const CreateNoteModal = ({ isOpen, onClose, onSubmit }) => {
         content: '',
         category: ''
     });
+    const [attachedFiles, setAttachedFiles] = useState([]);
+    const [uploadingFiles, setUploadingFiles] = useState(false);
 
     const getCategories = () => [
         { key: 'personal', label: t('notes.categories.personal') },
@@ -44,7 +47,50 @@ const CreateNoteModal = ({ isOpen, onClose, onSubmit }) => {
         };
     }, [isOpen]);
 
-    const handleSubmit = (e) => {
+    // Функция для обработки выбора файлов
+    const handleFileSelect = async (files) => {
+        if (!files || files.length === 0) return;
+        
+        setUploadingFiles(true);
+        const uploadedFiles = [];
+        
+        try {
+            for (const file of Array.from(files)) {
+                // Проверка размера файла (максимум 10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert(`Файл ${file.name} слишком большой. Максимум 10MB.`);
+                    continue;
+                }
+                
+                // Создаем временный ID для заметки
+                const tempNoteId = Date.now().toString();
+                
+                const uploadedFile = await uploadNoteFile(
+                    file, 
+                    project?.id || 'temp', 
+                    tempNoteId, 
+                    user?.uid || 'anonymous'
+                );
+                
+                uploadedFiles.push(uploadedFile);
+            }
+            
+            setAttachedFiles(prev => [...prev, ...uploadedFiles]);
+            alert(`Загружено файлов: ${uploadedFiles.length}`);
+        } catch (error) {
+            console.error('File upload error:', error);
+            alert('Ошибка загрузки файлов');
+        } finally {
+            setUploadingFiles(false);
+        }
+    };
+
+    // Функция удаления файла
+    const removeFile = (index) => {
+        setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
         
         console.log('Form submission started with data:', formData);
@@ -151,6 +197,74 @@ const CreateNoteModal = ({ isOpen, onClose, onSubmit }) => {
                         <div className="text-right text-xs text-gray-500 mt-1">
                             {formData.content.length}/5000
                         </div>
+                    </div>
+
+                    {/* File Upload Section */}
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            {t('files.attachments')} 📎
+                        </label>
+                        
+                        {/* File Drop Zone */}
+                        <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center">
+                            <input
+                                type="file"
+                                multiple
+                                id="file-upload"
+                                className="hidden"
+                                onChange={(e) => handleFileSelect(e.target.files)}
+                                accept="image/*,application/pdf,.doc,.docx,.txt,.csv,.kml,.gpx"
+                            />
+                            
+                            <label htmlFor="file-upload" className="cursor-pointer">
+                                <div className="space-y-2">
+                                    <svg className="w-8 h-8 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                    </svg>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                      {uploadingFiles ? 'Загрузка файлов...' : 'Нажмите или перетащите файлы сюда'}
+                                    </p>
+                                    <p className="text-xs text-gray-400">
+                                      Поддержка: изображения, PDF, документы, геоданные (максимум 10MB)
+                                    </p>
+                                </div>
+                            </label>
+                        </div>
+
+                        {/* Attached Files List */}
+                        {attachedFiles.length > 0 && (
+                          <div className="mt-3 space-y-2">
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Прикрепленные файлы ({attachedFiles.length}):
+                            </p>
+                            {attachedFiles.map((file, index) => (
+                              <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-sm">
+                                    {file.type.startsWith('image/') ? '🖼️' : 
+                                     file.type.includes('pdf') ? '📄' : 
+                                     file.name.endsWith('.kml') ? '🗺️' : '📎'}
+                                  </span>
+                                  <div>
+                                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                      {file.name}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                                    </p>
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => removeFile(index)}
+                                  className="text-red-500 hover:text-red-700 text-sm"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                     </div>
 
                     {/* Form Actions */}
