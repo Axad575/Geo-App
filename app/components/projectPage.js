@@ -562,7 +562,7 @@ const handleAddNote = async () => {
 
                         {/* Add Note Form */}
                         {showAddNote && (
-                            <div className="mb-4 p-4 bg-blue-50 dark:bg-gray-700 rounded-lg">
+                            <div className="mb-4 p-4 bg-blue-50  rounded-lg">
                                 <div className="space-y-4">
                                     {/* Note Title */}
                                     <div>
@@ -574,7 +574,7 @@ const handleAddNote = async () => {
                                             value={newNote.title}
                                             onChange={(e) => setNewNote(prev => ({ ...prev, title: e.target.value }))}
                                             placeholder={t('notes.enterTitle')}
-                                            className="w-full p-3 border dark:bg-gray-600 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         />
                                     </div>
 
@@ -587,7 +587,7 @@ const handleAddNote = async () => {
                                             value={newNote.description}
                                             onChange={(e) => setNewNote(prev => ({ ...prev, description: e.target.value }))}
                                             placeholder={t('notes.enterDescription')}
-                                            className="w-full p-3 border dark:bg-gray-600 border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             rows="3"
                                         />
                                     </div>
@@ -600,7 +600,7 @@ const handleAddNote = async () => {
                                         <select
                                             value={newNote.locationId}
                                             onChange={(e) => setNewNote(prev => ({ ...prev, locationId: e.target.value }))}
-                                            className="w-full p-3 border dark:bg-gray-600 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         >
                                             <option value="">{t('notes.noLocation')}</option>
                                             {project.locations && project.locations.map((location) => (
@@ -621,12 +621,12 @@ const handleAddNote = async () => {
 
                                     {/* File Upload Section */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
                                             📎 Прикрепить файлы
                                         </label>
                                         
                                         {/* File Drop Zone */}
-                                        <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center">
+                                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                                             <input
                                                 type="file"
                                                 multiple
@@ -638,13 +638,13 @@ const handleAddNote = async () => {
                                             
                                             <label htmlFor="file-upload" className="cursor-pointer">
                                                 <div className="space-y-2">
-                                                    <svg className="w-8 h-8 mx-auto text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <svg className="w-8 h-8 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                                     </svg>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                    <p className="text-sm text-gray-500">
                                                         {uploadingFiles ? 'Загрузка файлов...' : 'Нажмите или перетащите файлы сюда'}
                                                     </p>
-                                                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                                                    <p className="text-xs text-gray-400">
                                                         Поддержка: изображения, PDF, документы, геоданные (максимум 10MB)
                                                     </p>
                                                 </div>
@@ -654,11 +654,11 @@ const handleAddNote = async () => {
                                         {/* Attached Files List */}
                                         {attachedFiles.length > 0 && (
                                             <div className="mt-3 space-y-2">
-                                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                <p className="text-sm font-medium text-gray-700">
                                                     Прикрепленные файлы ({attachedFiles.length}):
                                                 </p>
                                                 {attachedFiles.map((file, index) => (
-                                                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                                                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                                                         <div className="flex items-center space-x-2">
                                                             <span className="text-sm">
                                                                 {file.type.startsWith('image/') ? '🖼️' : 
@@ -666,7 +666,7 @@ const handleAddNote = async () => {
                                                                  file.name.endsWith('.kml') ? '🗺️' : '📎'}
                                                             </span>
                                                             <div>
-                                                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                                <p className="text-sm font-medium text-gray-700">
                                                                     {file.name}
                                                                 </p>
                                                                 <p className="text-xs text-gray-500">
@@ -701,7 +701,7 @@ const handleAddNote = async () => {
                                             setShowAddNote(false);
                                             setNewNote({ title: '', description: '', locationId: '' });
                                         }}
-                                        className="px-4 py-2 bg-gray-300 text-gray-700 dark:bg-gray-600 dark:text-gray-200 rounded-lg hover:bg-gray-400"
+                                        className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
                                     >
                                         {t('cancel')}
                                     </button>
@@ -716,7 +716,7 @@ const handleAddNote = async () => {
                                         <div key={index} className="bg-white p-4 rounded-lg shadow-sm">
                                             <div className="flex items-start justify-between">
                                                 <div className="flex-1">
-                                                    <h4 className="font-semibold dark:text-gray-200 text-gray-800 mb-2">
+                                                    <h4 className="font-semibold text-gray-800 mb-2">
                                                         {note.title || note.text}
                                                     </h4>
                                                     {note.description && (
@@ -758,29 +758,29 @@ const handleAddNote = async () => {
                                             </div>
 
                                             {/* Здесь уже есть отображение заголовка и описания заметки */}
-                                            <h4 className="font-medium text-gray-900 dark:text-gray-100">
+                                            <h4 className="font-medium text-gray-900">
                                                 {note.title}
                                             </h4>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                            <p className="text-sm text-gray-600 mt-1">
                                                 {note.description}
                                             </p>
                                             
                                             {/* ДОБАВЬТЕ ЭТОТ КОД СЮДА - для отображения файлов */}
                                             {note.attachments && note.attachments.length > 0 && (
                                                 <div className="mt-2">
-                                                    <h5 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                    <h5 className="text-sm font-medium text-gray-700 mb-2">
                                                         📎 Прикрепленные файлы ({note.attachments.length}):
                                                     </h5>
                                                     <div className="space-y-1">
                                                         {note.attachments.map((file, fileIndex) => (
-                                                            <div key={fileIndex} className="flex items-center justify-between p-2 bg-gray-100 dark:bg-gray-600 rounded text-xs">
+                                                            <div key={fileIndex} className="flex items-center justify-between p-2 bg-gray-100 rounded text-xs">
                                                                 <div className="flex items-center space-x-2">
                                                                     <span>
                                                                         {file.type.startsWith('image/') ? '🖼️' : 
                                                                          file.type.includes('pdf') ? '📄' : 
                                                                          file.name.endsWith('.kml') ? '🗺️' : '📎'}
                                                                     </span>
-                                                                    <span className="text-gray-700 dark:text-gray-300">{file.name}</span>
+                                                                    <span className="text-gray-700">{file.name}</span>
                                                                     <span className="text-gray-500">
                                                                         ({(file.size / 1024 / 1024).toFixed(2)} MB)
                                                                     </span>

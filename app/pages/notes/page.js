@@ -196,7 +196,7 @@ export default function Notes() {
 
     if (loading) {
         return (
-            <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+            <div className="flex h-screen bg-gray-100 ">
                 <Sidebar />
                 <div className="flex-1 flex flex-col">
                     <Navbar />
@@ -212,7 +212,7 @@ export default function Notes() {
     }
 
     return (
-        <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+        <div className="flex h-screen bg-gray-100 ">
             <Sidebar />
             <div className="flex-1 flex flex-col overflow-hidden">
                 <Navbar />
@@ -247,7 +247,7 @@ export default function Notes() {
                             <select
                                 value={filterBy}
                                 onChange={(e) => setFilterBy(e.target.value)}
-                                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-right bg-no-repeat bg-contain appearance-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                                className="px-4 py-2 border border-gray-300  rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 bg-right bg-no-repeat bg-contain appearance-none bg-white  text-gray-900 "
                             >
                                 <option value="all">{t('notes.allNotes')}</option>
                                 <option value="recent">{t('notes.recent')}</option>
@@ -292,7 +292,7 @@ export default function Notes() {
                             {filteredNotes.map((note) => (
                                 <div
                                     key={note.id}
-                                    className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 cursor-pointer"
+                                    className="bg-white  rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 cursor-pointer"
                                 >
                                     {/* Note Header */}
                                     <div className="flex justify-between items-start mb-3">
@@ -341,7 +341,7 @@ export default function Notes() {
                                         <span>{formatDate(note.updatedAt)}</span>
                                         <div className="flex gap-2">
                                             {note.category && (
-                                                <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full text-xs">
+                                                <span className="bg-blue-100  text-blue-800  px-2 py-1 rounded-full text-xs">
                                                     {note.category}
                                                 </span>
                                             )}

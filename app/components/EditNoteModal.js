@@ -136,7 +136,7 @@ const EditNoteModal = ({ isOpen, onClose, onSubmit, note }) => {
             }}
         >
             <div 
-                className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-full overflow-auto my-auto mx-auto shadow-xl"
+                className="bg-white  rounded-lg p-6 w-full max-w-2xl max-h-full overflow-auto my-auto mx-auto shadow-xl"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center mb-3">

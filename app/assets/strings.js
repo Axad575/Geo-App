@@ -371,14 +371,8 @@ const strings = {
             
             // Внешний вид
             interfaceLanguage: "Язык интерфейса",
-            themeSettings: "Тема оформления",
-            lightTheme: "Светлая тема",
-            darkTheme: "Темная тема",
-            systemTheme: "Системная тема",
-            systemThemeDescription: "Системная тема будет автоматически переключаться между светлой и темной в зависимости от настроек вашего устройства.",
             preview: "Предварительный просмотр",
             languageChanged: "Язык изменен! Обновите страницу для применения изменений.",
-            themeChanged: "Тема успешно изменена!",
             geologicalProject: "Геологический проект",
             sampleProjectPreview: "Предварительный просмотр проекта"
         },
@@ -843,14 +837,8 @@ const strings = {
             
             // Appearance
             interfaceLanguage: "Interface Language",
-            themeSettings: "Theme Settings",
-            lightTheme: "Light Theme",
-            darkTheme: "Dark Theme",
-            systemTheme: "System Theme",
-            systemThemeDescription: "System theme will automatically switch between light and dark depending on your device settings.",
             preview: "Preview",
             languageChanged: "Language changed! Refresh the page to apply changes.",
-            themeChanged: "Theme changed successfully!",
             geologicalProject: "Geological Project",
             sampleProjectPreview: "Sample project preview"
         },
@@ -1315,14 +1303,8 @@ const strings = {
             
             // Tashqi ko'rinish
             interfaceLanguage: "Interfeys tili",
-            themeSettings: "Mavzu sozlamalari",
-            lightTheme: "Yorug' mavzu",
-            darkTheme: "Qorong'u mavzu",
-            systemTheme: "Tizim mavzusi",
-            systemThemeDescription: "Tizim mavzusi qurilma sozlamalariga qarab avtomatik ravishda yorug' va qorong'u o'rtasida almashadi.",
             preview: "Oldindan ko'rish",
             languageChanged: "Til o'zgartirildi! O'zgarishlarni qo'llash uchun sahifani yangilang.",
-            themeChanged: "Mavzu muvaffaqiyatli o'zgartirildi!",
             geologicalProject: "Geologik Loyiha",
             sampleProjectPreview: "Namunaviy loyiha ko'rinishi"
         },

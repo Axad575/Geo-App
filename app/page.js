@@ -107,22 +107,22 @@ export default function Home() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-between p-24 bg-white dark:bg-gray-900">
-      <div className="w-1/3 border-2 border-gray-300 dark:border-gray-600 rounded-xl shadow-lg bg-white dark:bg-gray-800">
+    <div className="flex min-h-screen flex-col items-center justify-between p-24 bg-white">
+      <div className="w-1/3 border-2 border-gray-300 rounded-xl shadow-lg bg-white">
       <h1 className="text-3xl font-semibold text-center rounded-t-xl p-4 bg-green-800 text-white  mb-10"> Geo-App</h1>
       <form onSubmit={handleLogin} className="flex flex-col space-y-4 p-4">
-        <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">{t('auth.email')}:</h2>
+        <h2 className="text-lg font-medium text-gray-900">{t('auth.email')}:</h2>
         <input
           type="email"
           placeholder={t('auth.emailPlaceholder')}
-          className="border border-gray-300 dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+          className="border border-gray-300 p-2 rounded bg-white text-gray-900 placeholder-gray-500"
           id="email" name="email" required
         />
-        <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">{t('auth.password')}:</h2>
+        <h2 className="text-lg font-medium text-gray-900">{t('auth.password')}:</h2>
         <input
           type="password"
           placeholder={t('auth.passwordPlaceholder')}
-          className="border border-gray-300 dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+          className="border border-gray-300 p-2 rounded bg-white text-gray-900 placeholder-gray-500"
           id="password" name="password" required
         />
         <button
@@ -131,8 +131,8 @@ export default function Home() {
         >
           {t('auth.login')}
         </button>
-        <p className="text-sm text-center text-gray-600 dark:text-gray-400">{t('auth.termsText')}</p>
-        <p className="text-sm text-center text-gray-600 dark:text-gray-400">© 2025</p>
+        <p className="text-sm text-center text-gray-600">{t('auth.termsText')}</p>
+        <p className="text-sm text-center text-gray-600">abdu1axad © 2025</p>
       </form>
       </div>
     </div>

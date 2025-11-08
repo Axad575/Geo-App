@@ -38,13 +38,13 @@ const MeetingListItem = ({ meeting, users }) => {
     const { date, time } = formatDateTime(meeting.date);
 
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-lg border-2 border-gray-300 dark:border-gray-600 mb-4 hover:shadow-md transition-shadow">
+        <div className="bg-white  rounded-lg border-2 border-gray-300  mb-4 hover:shadow-md transition-shadow">
             <div className="p-6">
                 <div className="flex justify-between items-start mb-3">
                     <div>
-                        <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200">{meeting.title}</h3>
+                        <h3 className="text-xl font-semibold text-gray-800">{meeting.title}</h3>
                         <div className="flex items-center gap-3 mt-2">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">{date}</span>
+                            <span className="text-sm text-gray-600">{date}</span>
                             <span className="text-sm font-semibold text-blue-600">{time}</span>
                         </div>
                     </div>

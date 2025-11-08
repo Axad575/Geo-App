@@ -57,10 +57,9 @@ export default function CalendarDropdown({ meeting }) {
         <div className="relative">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 
-                    rounded-md shadow-sm bg-white dark:bg-gray-700 text-sm font-medium 
-                    text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 
-                    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                className="inline-flex items-center px-3 py-2 border border-gray-300  
+                    rounded-md shadow-sm bg-white text-sm font-medium 
+                    text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
             >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
@@ -73,12 +72,11 @@ export default function CalendarDropdown({ meeting }) {
             </button>
             
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-700 
-                    ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
                     <div className="py-1">
                         <button
                             onClick={() => handleCalendarAction('google')}
-                            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 
+                            className="flex items-center w-full px-4 py-2 text-sm text-gray-700
                                 hover:bg-gray-100 dark:hover:bg-gray-600"
                         >
                             <svg className="w-4 h-4 mr-3" viewBox="0 0 24 24">
@@ -92,8 +90,8 @@ export default function CalendarDropdown({ meeting }) {
                         
                         <button
                             onClick={() => handleCalendarAction('outlook')}
-                            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 
-                                hover:bg-gray-100 dark:hover:bg-gray-600"
+                            className="flex items-center w-full px-4 py-2 text-sm text-gray-700
+                                hover:bg-gray-100"
                         >
                             <svg className="w-4 h-4 mr-3" viewBox="0 0 24 24">
                                 <path fill="#0078d4" d="M12 0C8.5 0 5.7 2.8 5.7 6.3v11.4C5.7 21.2 8.5 24 12 24s6.3-2.8 6.3-6.3V6.3C18.3 2.8 15.5 0 12 0zm3.6 13.8h-3.2v4.7c0 .4-.3.7-.7.7s-.7-.3-.7-.7v-4.7H7.8c-.4 0-.7-.3-.7-.7s.3-.7.7-.7H11v-2.8H7.8c-.4 0-.7-.3-.7-.7s.3-.7.7-.7H11V5.5c0-.4.3-.7.7-.7s.7.3.7.7v2.8h3.2c.4 0 .7.3.7.7s-.3.7-.7.7h-3.2v2.8h3.2c.4 0 .7.3.7.7s-.3.7-.7.7z"/>
@@ -103,8 +101,8 @@ export default function CalendarDropdown({ meeting }) {
                         
                         <button
                             onClick={() => handleCalendarAction('apple')}
-                            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 
-                                hover:bg-gray-100 dark:hover:bg-gray-600"
+                            className="flex items-center w-full px-4 py-2 text-sm text-gray-700
+                                hover:bg-gray-100"
                         >
                             <svg className="w-4 h-4 mr-3" viewBox="0 0 24 24">
                                 <path fill="currentColor" d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
@@ -112,12 +110,12 @@ export default function CalendarDropdown({ meeting }) {
                             {t('meetings.appleCalendar')}
                         </button>
                         
-                        <div className="border-t border-gray-100 dark:border-gray-600"></div>
+                        <div className="border-t border-gray-100"></div>
                         
                         <button
                             onClick={() => handleCalendarAction('ics')}
-                            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 
-                                hover:bg-gray-100 dark:hover:bg-gray-600"
+                            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 
+                                hover:bg-gray-100"
                         >
                             <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 

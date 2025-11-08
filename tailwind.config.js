@@ -5,17 +5,9 @@ module.exports = {
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
   ],
-  darkMode: 'class', // Включаем темную тему через класс
   theme: {
     extend: {
-      colors: {
-        // Можно добавить кастомные цвета для темной темы
-        dark: {
-          bg: '#1a1a1a',
-          surface: '#2d2d2d',
-          text: '#ffffff',
-        }
-      }
+      // Можно добавить кастомные цвета если нужно
     },
   },
   plugins: [],

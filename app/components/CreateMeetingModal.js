@@ -152,11 +152,11 @@ const CreateMeetingModal = ({ isOpen, onClose, onSuccess, orgId, projectId = nul
             }}
         >
             <div 
-                className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-full overflow-y-auto my-auto mx-auto shadow-xl"
+                className="bg-white  rounded-lg p-6 w-full max-w-md max-h-full overflow-y-auto my-auto mx-auto shadow-xl"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{t('meetings.scheduleMeeting')}</h2>
+                    <h2 className="text-xl font-semibold text-gray-900 ">{t('meetings.scheduleMeeting')}</h2>
                     <button
                         onClick={onClose}
                         className="text-gray-500 hover:text-gray-700"
@@ -170,19 +170,19 @@ const CreateMeetingModal = ({ isOpen, onClose, onSuccess, orgId, projectId = nul
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Организация - только для чтения */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                             {t('projects.organization')}
                         </label>
                         <input
                             type="text"
                             value={orgName}
                             disabled
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 cursor-not-allowed"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600 cursor-not-allowed"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                             {t('meetings.meetingTitle')} <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -190,13 +190,13 @@ const CreateMeetingModal = ({ isOpen, onClose, onSuccess, orgId, projectId = nul
                             required
                             value={formData.title}
                             onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                             placeholder={t('meetings.meetingTitle')}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                             {t('meetings.startDate')} <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -204,18 +204,18 @@ const CreateMeetingModal = ({ isOpen, onClose, onSuccess, orgId, projectId = nul
                             required
                             value={formData.date}
                             onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                             {t('projects.projectOptional')}
                         </label>
                         <select
                             value={formData.projectId || ''}
                             onChange={(e) => setFormData(prev => ({ ...prev, projectId: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                         >
                             <option value="">{t('projects.noProject')}</option>
                             {projects.map(project => (
@@ -227,25 +227,25 @@ const CreateMeetingModal = ({ isOpen, onClose, onSuccess, orgId, projectId = nul
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                             {t('meetings.location')}
                         </label>
                         <input
                             type="text"
                             value={formData.location}
                             onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                             placeholder={t('meetings.enterMeetingLocation')}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                             {t('meetings.participants')}
                         </label>
-                        <div className="space-y-2 max-h-32 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-md p-3 bg-gray-50 dark:bg-gray-700">
+                        <div className="space-y-2 max-h-32 overflow-y-auto border border-gray-300 rounded-md p-3 bg-gray-50">
                             {users.length === 0 ? (
-                                <p className="text-sm text-gray-500 dark:text-gray-400 p-2">{t('projects.noUsersAvailable')}</p>
+                                <p className="text-sm text-gray-500 p-2">{t('projects.noUsersAvailable')}</p>
                             ) : (
                                 users.map(user => (
                                     <div key={user.id} className="flex items-center">
@@ -254,11 +254,11 @@ const CreateMeetingModal = ({ isOpen, onClose, onSuccess, orgId, projectId = nul
                                             id={`user-${user.id}`}
                                             checked={formData.participants.includes(user.id)}
                                             onChange={() => handleParticipantChange(user.id)}
-                                            className="h-4 w-4 text-blue-600 rounded border-gray-300 dark:border-gray-600"
+                                            className="h-4 w-4 text-blue-600 rounded border-gray-300"
                                         />
-                                        <label htmlFor={`user-${user.id}`} className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                        <label htmlFor={`user-${user.id}`} className="ml-2 text-sm text-gray-700">
                                             {user.name || user.email}
-                                            {user.role && <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">({user.role})</span>}
+                                            {user.role && <span className="text-xs text-gray-500 ml-1">({user.role})</span>}
                                         </label>
                                     </div>
                                 ))
@@ -267,14 +267,14 @@ const CreateMeetingModal = ({ isOpen, onClose, onSuccess, orgId, projectId = nul
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
                             {t('meetings.notes')}
                         </label>
                         <textarea
                             value={formData.notes}
                             onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                             rows={3}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                             placeholder={t('meetings.addMeetingNotes')}
                         />
                     </div>
@@ -283,7 +283,7 @@ const CreateMeetingModal = ({ isOpen, onClose, onSuccess, orgId, projectId = nul
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+                            className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
                         >
                             {t('meetings.cancel')}
                         </button>

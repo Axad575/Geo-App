@@ -126,7 +126,7 @@ const CreateNoteModal = ({ isOpen, onClose, onSubmit }) => {
             }}
         >
             <div 
-                className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-full overflow-auto my-auto mx-auto shadow-xl"
+                className="bg-white  rounded-lg p-6 w-full max-w-2xl max-h-full overflow-auto my-auto mx-auto shadow-xl"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center mb-3">
@@ -201,12 +201,12 @@ const CreateNoteModal = ({ isOpen, onClose, onSubmit }) => {
 
                     {/* File Upload Section */}
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                             {t('files.attachments')} 📎
                         </label>
                         
                         {/* File Drop Zone */}
-                        <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center">
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                             <input
                                 type="file"
                                 multiple
@@ -221,7 +221,7 @@ const CreateNoteModal = ({ isOpen, onClose, onSubmit }) => {
                                     <svg className="w-8 h-8 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                     </svg>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    <p className="text-sm text-gray-500">
                                       {uploadingFiles ? 'Загрузка файлов...' : 'Нажмите или перетащите файлы сюда'}
                                     </p>
                                     <p className="text-xs text-gray-400">
@@ -234,11 +234,11 @@ const CreateNoteModal = ({ isOpen, onClose, onSubmit }) => {
                         {/* Attached Files List */}
                         {attachedFiles.length > 0 && (
                           <div className="mt-3 space-y-2">
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <p className="text-sm font-medium text-gray-700">
                               Прикрепленные файлы ({attachedFiles.length}):
                             </p>
                             {attachedFiles.map((file, index) => (
-                              <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                              <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                                 <div className="flex items-center space-x-2">
                                   <span className="text-sm">
                                     {file.type.startsWith('image/') ? '🖼️' : 
@@ -246,7 +246,7 @@ const CreateNoteModal = ({ isOpen, onClose, onSubmit }) => {
                                      file.name.endsWith('.kml') ? '🗺️' : '📎'}
                                   </span>
                                   <div>
-                                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    <p className="text-sm font-medium text-gray-700">
                                       {file.name}
                                     </p>
                                     <p className="text-xs text-gray-500">
@@ -272,7 +272,7 @@ const CreateNoteModal = ({ isOpen, onClose, onSubmit }) => {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-6 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                            className="px-6 py-3 text-sm font-medium text-gray-700 hover:text-gray-900  hover:bg-gray-50 rounded-lg transition-colors"
                         >
                             {t('meetings.cancel')}
                         </button>

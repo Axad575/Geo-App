@@ -16,14 +16,14 @@ const ProjectListItem = ({ project }) => {
     const getStatusColor = (status) => {
         switch (status?.toLowerCase()) {
             case 'active':
-                return 'border-black dark:border-white';
+                return 'border-black';
             case 'completed':
-                return 'border-green-400 dark:border-green-500';
+                return 'border-green-400';
             case 'upcoming':
             case 'in progress':
-                return 'border-yellow-400 dark:border-yellow-500';
+                return 'border-yellow-400';
             default:
-                return 'border-gray-300 dark:border-gray-600';
+                return 'border-gray-300';
         }
     };
 
@@ -41,27 +41,27 @@ const ProjectListItem = ({ project }) => {
     };
 
     return (
-        <div className={`bg-white dark:bg-gray-800 rounded-lg border-2 ${getStatusColor(project.status)} mb-4`}>
+        <div className={`bg-white rounded-lg border-2 ${getStatusColor(project.status)} mb-4`}>
             <div className="p-6">
                 <div className="flex justify-between items-start">
                     <div>
-                        <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{project.title}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        <h3 className="text-xl font-semibold text-gray-900">{project.title}</h3>
+                        <p className="text-sm text-gray-600 mt-1">
                             {formatDate(project.startDate)}-{formatDate(project.endDate)}
                         </p>
                     </div>
                     <div className="text-right">
-                        <p className="font-medium text-gray-900 dark:text-gray-100">{project.organization}</p>
+                        <p className="font-medium text-gray-900">{project.organization}</p>
                     </div>
                 </div>
                 <div className="flex justify-between items-center mt-4">
                     <button 
                         onClick={() => router.push(`/pages/projects/${project.id}`)}
-                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                        className="text-blue-600 hover:text-blue-800 transition-colors"
                     >
                         {t('projects.openProject')} &gt;&gt;
                     </button>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-gray-600">
                         {t('projects.status')}: {project.status}
                     </p>
                 </div>
@@ -155,16 +155,16 @@ export default function Projects() {
     }, []);
 
     return (
-        <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="flex h-screen bg-gray-50">
             <Sidebar orgId={orgId} />
             <div className="flex-1">
                 <Navbar orgId={orgId} />
                 <div className="p-8">
-                    <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">{t('projects.title')}</h1>
+                    <h1 className="text-2xl font-bold mb-6 text-gray-900">{t('projects.title')}</h1>
                     {loading ? (
-                        <div className="text-center text-gray-700 dark:text-gray-300">{t('loading')}...</div>
+                        <div className="text-center text-gray-700">{t('loading')}...</div>
                     ) : projects.length === 0 ? (
-                        <div className="text-center text-gray-500 dark:text-gray-400">No projects found</div>
+                        <div className="text-center text-gray-500">No projects found</div>
                     ) : (
                         <div className="max-w-3xl">
                             {projects.map((project) => (

@@ -148,7 +148,7 @@ const AddLocationModal = ({ isOpen, onClose, onAdd, selectedLocation = null }) =
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-semibold">{t('locations.addLocationPoint')}</h2>
                     <button
@@ -162,7 +162,7 @@ const AddLocationModal = ({ isOpen, onClose, onAdd, selectedLocation = null }) =
                 </div>
 
                 {selectedLocation && (
-                    <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <div className="mb-4 p-3 bg-blue-50 rounded-lg">
                         <p className="text-sm text-blue-700">
                             <strong>{t('locations.selectedCoordinates')}:</strong> {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}
                         </p>
@@ -198,7 +198,7 @@ const AddLocationModal = ({ isOpen, onClose, onAdd, selectedLocation = null }) =
                     </div>
 
                     {/* Переключатель формата координат */}
-                    <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <span className="text-sm font-medium text-gray-700">{t('locations.coordinateFormat')}:</span>
                         <button
                             type="button"

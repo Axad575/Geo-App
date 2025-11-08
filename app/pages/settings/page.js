@@ -6,7 +6,7 @@ import { app, db } from "@/app/api/firebase";
 import { collection, getDocs, doc, getDoc, updateDoc } from "firebase/firestore";
 import Sidebar from "@/app/components/sidebar";
 import Navbar from "@/app/components/navbar";
-import { useStrings, changeLanguage, changeTheme } from "@/app/hooks/useStrings";
+import { useStrings, changeLanguage } from "@/app/hooks/useStrings";
 
 export default function Settings() {
     const router = useRouter();
@@ -30,8 +30,7 @@ export default function Settings() {
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
     const [appSettings, setAppSettings] = useState({
-        language: 'ru',
-        theme: 'light'
+        language: 'ru'
     });
 
     // Получение текущей организации пользователя
@@ -78,30 +77,9 @@ export default function Settings() {
 
         // Загружаем настройки приложения из localStorage
         const savedLanguage = localStorage.getItem('app-language') || 'ru';
-        const savedTheme = localStorage.getItem('app-theme') || 'light';
         setAppSettings({
-            language: savedLanguage,
-            theme: savedTheme
+            language: savedLanguage
         });
-
-        // Применяем тему
-        changeTheme(savedTheme);
-
-        // Добавляем слушатель для системной темы
-        if (savedTheme === 'auto') {
-            const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-            const handleSystemThemeChange = (e) => {
-                if (localStorage.getItem('app-theme') === 'auto') {
-                    changeTheme('auto');
-                }
-            };
-            mediaQuery.addEventListener('change', handleSystemThemeChange);
-            
-            return () => {
-                unsubscribe();
-                mediaQuery.removeEventListener('change', handleSystemThemeChange);
-            };
-        }
 
         return () => unsubscribe();
     }, [router]);
@@ -115,12 +93,6 @@ export default function Settings() {
         setAppSettings(prev => ({ ...prev, language: newLanguage }));
         changeLanguage(newLanguage);
         showMessage('success', t('settings.languageChanged'));
-    };
-
-    const handleThemeChange = (newTheme) => {
-        setAppSettings(prev => ({ ...prev, theme: newTheme }));
-        changeTheme(newTheme);
-        showMessage('success', t('settings.themeChanged'));
     };
 
     const handleProfileUpdate = async (e) => {
@@ -183,7 +155,7 @@ export default function Settings() {
     const handleLogout = async () => {
         try {
             await signOut(auth);
-            router.push('/auth/login');
+            router.push('/');
         } catch (error) {
             console.error('Error signing out:', error);
         }
@@ -479,85 +451,6 @@ export default function Settings() {
                                                     <label htmlFor="lang-uz" className="ml-3 block text-sm font-medium text-gray-700 cursor-pointer">
                                                         🇺🇿 O'zbekcha
                                                     </label>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="border-t pt-6">
-                                            <h3 className="text-lg font-medium text-gray-900 mb-4">
-                                                {t('settings.themeSettings')}
-                                            </h3>
-                                            <div className="space-y-3">
-                                                <div className="flex items-center">
-                                                    <input
-                                                        type="radio"
-                                                        id="theme-light"
-                                                        name="theme"
-                                                        value="light"
-                                                        checked={appSettings.theme === 'light'}
-                                                        onChange={(e) => handleThemeChange(e.target.value)}
-                                                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
-                                                    />
-                                                    <label htmlFor="theme-light" className="ml-3 block text-sm font-medium text-gray-700 cursor-pointer">
-                                                        ☀️ {t('settings.lightTheme')}
-                                                    </label>
-                                                </div>
-                                                <div className="flex items-center">
-                                                    <input
-                                                        type="radio"
-                                                        id="theme-dark"
-                                                        name="theme"
-                                                        value="dark"
-                                                        checked={appSettings.theme === 'dark'}
-                                                        onChange={(e) => handleThemeChange(e.target.value)}
-                                                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
-                                                    />
-                                                    <label htmlFor="theme-dark" className="ml-3 block text-sm font-medium text-gray-700 cursor-pointer">
-                                                        🌙 {t('settings.darkTheme')}
-                                                    </label>
-                                                </div>
-                                                <div className="flex items-center">
-                                                    <input
-                                                        type="radio"
-                                                        id="theme-auto"
-                                                        name="theme"
-                                                        value="auto"
-                                                        checked={appSettings.theme === 'auto'}
-                                                        onChange={(e) => handleThemeChange(e.target.value)}
-                                                        className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300"
-                                                    />
-                                                    <label htmlFor="theme-auto" className="ml-3 block text-sm font-medium text-gray-700 cursor-pointer">
-                                                        🔄 {t('settings.systemTheme')}
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <p className="text-xs text-gray-500 mt-3">
-                                                {t('settings.systemThemeDescription')}
-                                            </p>
-                                        </div>
-
-                                        <div className="border-t pt-6">
-                                            <h3 className="text-lg font-medium text-gray-900 mb-4">
-                                                {t('settings.preview')}
-                                            </h3>
-                                            <div className={`rounded-lg border-2 border-dashed border-gray-300 p-4 ${
-                                                appSettings.theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
-                                            }`}>
-                                                <div className="flex items-center space-x-4">
-                                                    <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
-                                                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        </svg>
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="text-lg font-semibold">
-                                                            {t('settings.geologicalProject')}
-                                                        </h4>
-                                                        <p className="text-sm opacity-75">
-                                                            {t('settings.sampleProjectPreview')}
-                                                        </p>
-                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
