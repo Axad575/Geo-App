@@ -20,7 +20,7 @@ const MeetingListItem = ({ meeting, users }) => {
         try {
             const date = new Date(datetime);
             return {
-                date: date.toLocaleDateString(getLocale(), {
+                datetime: date.toLocaleDateString(getLocale(), {
                     day: '2-digit',
                     month: '2-digit',
                     year: 'numeric'
@@ -31,11 +31,11 @@ const MeetingListItem = ({ meeting, users }) => {
                 })
             };
         } catch (error) {
-            return { date: '', time: '' };
+            return { datetime: '', time: '' };
         }
     };
 
-    const { date, time } = formatDateTime(meeting.date);
+    const { datetime, time } = formatDateTime(meeting.datetime);
 
     return (
         <div className="bg-white  rounded-lg border-2 border-gray-300  mb-4 hover:shadow-md transition-shadow">
@@ -44,7 +44,7 @@ const MeetingListItem = ({ meeting, users }) => {
                     <div>
                         <h3 className="text-xl font-semibold text-gray-800">{meeting.title}</h3>
                         <div className="flex items-center gap-3 mt-2">
-                            <span className="text-sm text-gray-600">{date}</span>
+                            <span className="text-sm text-gray-600">{datetime}</span>
                             <span className="text-sm font-semibold text-blue-600">{time}</span>
                         </div>
                     </div>

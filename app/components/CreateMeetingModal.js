@@ -13,7 +13,7 @@ const CreateMeetingModal = ({ isOpen, onClose, onSuccess, orgId, projectId = nul
     const [orgName, setOrgName] = useState('');
     const [formData, setFormData] = useState({
         title: '',
-        date: '',
+        datetime: '',
         location: '',
         owner: '',
         projectId: projectId || '',
@@ -106,7 +106,7 @@ const CreateMeetingModal = ({ isOpen, onClose, onSuccess, orgId, projectId = nul
             // Структура данных согласно новой схеме БД
             const meetingData = {
                 title: formData.title,
-                date: new Date(formData.date).toISOString(),
+                datetime: new Date(formData.datetime).toISOString(),
                 location: formData.location || '',
                 owner: formData.owner,
                 projectId: formData.projectId || null,
@@ -126,7 +126,7 @@ const CreateMeetingModal = ({ isOpen, onClose, onSuccess, orgId, projectId = nul
             // Сброс формы
             setFormData({
                 title: '',
-                date: '',
+                datetime: '',
                 location: '',
                 owner: auth.currentUser?.uid || '',
                 projectId: projectId || '',
@@ -202,8 +202,8 @@ const CreateMeetingModal = ({ isOpen, onClose, onSuccess, orgId, projectId = nul
                         <input
                             type="datetime-local"
                             required
-                            value={formData.date}
-                            onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                            value={formData.datetime}
+                            onChange={(e) => setFormData(prev => ({ ...prev, datetime: e.target.value }))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
                         />
                     </div>

@@ -19,7 +19,7 @@ const MeetingCard = ({ meeting }) => {
         try {
             const date = new Date(datetime);
             return {
-                date: date.toLocaleDateString(getLocale(), {
+                datetime: date.toLocaleDateString(getLocale(), {
                     day: '2-digit',
                     month: '2-digit',
                     year: 'numeric'
@@ -30,12 +30,12 @@ const MeetingCard = ({ meeting }) => {
                 })
             };
         } catch (error) {
-            return { date: '', time: '' };
+            return { datetime: '', time: '' };
         }
     };
 
-    // Используем поле 'date' вместо 'datetime'
-    const { date, time } = formatDateTime(meeting.date);
+    // Используем поле 'datetime' вместо 'date'
+    const { datetime, time } = formatDateTime(meeting.datetime);
 
     const getStatusColor = (status) => {
         switch (status?.toLowerCase()) {
@@ -58,7 +58,7 @@ const MeetingCard = ({ meeting }) => {
                         {meeting.title}
                     </h3>
                     <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">{date}</span>
+                        <span className="text-sm text-gray-600">{datetime}</span>
                         <span className="text-sm font-semibold text-blue-600">{time}</span>
                     </div>
                 </div>
