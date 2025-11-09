@@ -304,7 +304,7 @@ export default function Home() {
                             </div>
                         ) : (
                             <div className="overflow-x-auto overflow-y-hidden">
-                                <div className="flex gap-4 pb-2" style={{ width: 'max-content' }}>
+                                <div className="grid grid-cols-3 gap-4 pb-2" style={{ width: 'max-content' }}>
                                     {projects.map((project) => (
                                         <div key={project.id} style={{ minWidth: '350px', maxWidth: '350px' }}>
                                             <ProjectCard project={project} orgId={orgId} />
@@ -335,7 +335,7 @@ export default function Home() {
                             </div>
                         ) : (
                             <div className="overflow-x-auto overflow-y-hidden">
-                                <div className="flex gap-4 pb-2" style={{ width: 'max-content' }}>
+                                <div className="grid grid-cols-3 gap-4 pb-2" style={{ width: 'max-content' }}>
                                     {meetings.map((meeting) => (
                                         <div key={meeting.id} style={{ minWidth: '320px', maxWidth: '320px' }}>
                                             <MeetingCard meeting={meeting} orgId={orgId} />
