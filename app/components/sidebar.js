@@ -40,7 +40,7 @@ export default function Sidebar() {
   return (
     <div className="sticky top-2 w-56 h-screen bg-green-800 text-white flex flex-col justify-between rounded-lg shadow-lg m-2 shrink-0 z-10">
       <div>
-        <div className="p-4 text-2xl font-semibold">Geo-app</div>
+        <div className="p-4 text-2xl font-semibold">Geo-Note</div>
 
         <div className="flex flex-col space-y-4 mt-4 px-4">
           <button onClick={libraryBtn} className="bg-green-400 text-black py-2 rounded-md hover:bg-green-300 transition">
