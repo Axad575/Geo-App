@@ -757,14 +757,14 @@ const handleAddNote = async () => {
                                                 </div>
                                             </div>
 
-                                            {/* Здесь уже есть отображение заголовка и описания заметки */}
+                                            {/* Здесь уже есть отображение заголовка и описания заметки
                                             <h4 className="font-medium text-gray-900">
                                                 {note.title}
                                             </h4>
                                             <p className="text-sm text-gray-600 mt-1">
                                                 {note.description}
-                                            </p>
-                                            
+                                            </p> */}
+
                                             {/* ДОБАВЬТЕ ЭТОТ КОД СЮДА - для отображения файлов */}
                                             {note.attachments && note.attachments.length > 0 && (
                                                 <div className="mt-2">
