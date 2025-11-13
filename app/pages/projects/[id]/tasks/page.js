@@ -29,6 +29,19 @@ const formatDate = (dateString) => {
     }
 };
 
+// Добавим функцию displayDate или заменим вызовы на formatDate
+const displayDate = (dateString, label = '') => {
+    if (!dateString) return null;
+    
+    const formattedDate = formatDate(dateString);
+    return (
+        <div className="flex flex-col items-center">
+            {label && <span className="text-xs text-gray-500">{label}</span>}
+            <span className="text-sm">{formattedDate}</span>
+        </div>
+    );
+};
+
 // Компонент Task Card для Timeline
 const TaskCard = ({ task, users, onTaskUpdate, isSelected, onSelect }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -907,9 +920,24 @@ export default function ProjectTasks() {
                                     <p className="text-sm text-gray-600">{project.description}</p>
                                 </div>
                                 <div className="flex gap-4 text-sm text-gray-600">
-                                    {displayDate(project.createdAt, 'Создан')}
-                                    {project.startDate && displayDate(project.startDate, 'Начало')}
-                                    {project.endDate && displayDate(project.endDate, 'Конец')}
+                                    {project.createdAt && (
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-xs text-gray-500">Создан</span>
+                                            <span className="text-sm">{formatDate(project.createdAt)}</span>
+                                        </div>
+                                    )}
+                                    {project.startDate && (
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-xs text-gray-500">Начало</span>
+                                            <span className="text-sm">{formatDate(project.startDate)}</span>
+                                        </div>
+                                    )}
+                                    {project.endDate && (
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-xs text-gray-500">Конец</span>
+                                            <span className="text-sm">{formatDate(project.endDate)}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
