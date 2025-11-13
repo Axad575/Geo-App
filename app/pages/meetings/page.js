@@ -8,6 +8,7 @@ import Sidebar from "@/app/components/sidebar";
 import Navbar from "@/app/components/navbar";
 import CreateMeetingModal from "@/app/components/CreateMeetingModal";
 import MeetingListItem from "@/app/components/MeetingListItem";
+import ParticipantSelector from "@/app/components/participantSelector";
 import { useStrings } from "@/app/hooks/useStrings";
 
 // Функция для генерации ссылки на конференцию
@@ -35,8 +36,153 @@ const sendMeetingNotifications = async (meeting, orgId, db) => {
     }
 };
 
-// Компонент для мгновенной встречи
+// Обновленный компонент для мгновенной встречи
 const QuickMeetingModal = ({ isOpen, onClose, onSubmit, orgId }) => {
+    const [meetingData, setMeetingData] = useState({
+        title: '',
+        description: '',
+        participants: []
+    });
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [currentUser, setCurrentUser] = useState(null);
+
+    useEffect(() => {
+        if (isOpen && orgId) {
+            fetchUsers();
+            const auth = getAuth();
+            setCurrentUser(auth.currentUser);
+        }
+    }, [isOpen, orgId]);
+
+    const fetchUsers = async () => {
+        try {
+            const usersSnapshot = await getDocs(collection(db, `organizations/${orgId}/users`));
+            const usersList = usersSnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setUsers(usersList);
+        } catch (error) {
+            console.error('Error fetching users:', error);
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!meetingData.title.trim()) return;
+
+        setLoading(true);
+        try {
+            await onSubmit(meetingData);
+            setMeetingData({
+                title: '',
+                description: '',
+                participants: []
+            });
+        } catch (error) {
+            console.error('Error creating quick meeting:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleParticipantsChange = (participants) => {
+        setMeetingData(prev => ({
+            ...prev,
+            participants
+        }));
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold">Мгновенная встреча</h3>
+                    <button
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-gray-600"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Тема встречи *
+                        </label>
+                        <input
+                            type="text"
+                            required
+                            value={meetingData.title}
+                            onChange={(e) => setMeetingData(prev => ({ ...prev, title: e.target.value }))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Введите тему встречи"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Описание
+                        </label>
+                        <textarea
+                            value={meetingData.description}
+                            onChange={(e) => setMeetingData(prev => ({ ...prev, description: e.target.value }))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            rows="3"
+                            placeholder="Краткое описание встречи"
+                        />
+                    </div>
+
+                    {/* Новый компонент выбора участников */}
+                    <ParticipantSelector
+                        users={users}
+                        selectedParticipants={meetingData.participants}
+                        onParticipantsChange={handleParticipantsChange}
+                        excludeUserIds={currentUser ? [currentUser.uid] : []}
+                        label="Участники конференции"
+                        placeholder="Поиск по имени, email или роли..."
+                        maxHeight="250px"
+                        showSelectedCount={true}
+                    />
+
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            type="submit"
+                            disabled={!meetingData.title.trim() || loading}
+                            className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                        >
+                            {loading ? 'Запускаем...' : (
+                                <>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                    Начать конференцию
+                                </>
+                            )}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            disabled={loading}
+                            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:opacity-50 transition-colors"
+                        >
+                            Отмена
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+// Компонент для мгновенной встречи
+const QuickMeetingModalOld = ({ isOpen, onClose, onSubmit, orgId }) => {
     const [meetingData, setMeetingData] = useState({
         title: '',
         description: '',

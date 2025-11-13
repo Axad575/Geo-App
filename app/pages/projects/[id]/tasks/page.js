@@ -6,7 +6,28 @@ import { app, db } from '@/app/api/firebase';
 import { doc, getDoc, updateDoc, arrayUnion, getDocs, collection } from 'firebase/firestore';
 import Sidebar from '@/app/components/sidebar';
 import Navbar from '@/app/components/navbar';
+// ИСПРАВЛЕНИЕ: правильный импорт с заглавной буквы
+import ParticipantSelector from '@/app/components/participantSelector';
 import { useStrings } from "@/app/hooks/useStrings";
+
+// Создадим также функцию formatDate для устранения ошибки
+const formatDate = (dateString) => {
+    if (!dateString) return 'Не указано';
+    
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'Некорректная дата';
+        
+        return date.toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        });
+    } catch (error) {
+        console.error('Error formatting date:', error);
+        return 'Ошибка даты';
+    }
+};
 
 // Компонент Task Card для Timeline
 const TaskCard = ({ task, users, onTaskUpdate, isSelected, onSelect }) => {
@@ -82,10 +103,10 @@ const TaskCard = ({ task, users, onTaskUpdate, isSelected, onSelect }) => {
                     </span>
                 </div>
 
-                {/* Assignee */}
+                {/* Assignee - улучшенное отображение */}
                 {task.assignee && (
                     <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs">
+                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
                             {(users[task.assignee] || task.assignee).charAt(0).toUpperCase()}
                         </div>
                         <span className="text-xs text-gray-600">
@@ -115,6 +136,21 @@ const TaskCard = ({ task, users, onTaskUpdate, isSelected, onSelect }) => {
                         <div>
                             <label className="text-xs font-medium text-gray-700">Описание</label>
                             <p className="text-sm text-gray-600 mt-1">{task.description}</p>
+                        </div>
+                    )}
+
+                    {/* Assignee Info */}
+                    {task.assignee && (
+                        <div>
+                            <label className="text-xs font-medium text-gray-700">Исполнитель</label>
+                            <div className="flex items-center gap-2 mt-1">
+                                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                                    {(users[task.assignee] || task.assignee).charAt(0).toUpperCase()}
+                                </div>
+                                <span className="text-sm text-gray-900">
+                                    {users[task.assignee] || task.assignee}
+                                </span>
+                            </div>
                         </div>
                     )}
 
@@ -364,7 +400,7 @@ const TaskControls = ({ currentFilter, onFilterChange, sortBy, onSortChange, tas
     );
 };
 
-// Компонент Add Task Modal (остается прежним)
+// Обновленный компонент Add Task Modal с ParticipantSelector
 const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
     const [newTask, setNewTask] = useState({
         title: '',
@@ -376,12 +412,55 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
         status: 'not started',
         locationId: ''
     });
+    const [loading, setLoading] = useState(false);
+
+    // Преобразуем объект users в массив для ParticipantSelector
+    const usersList = Object.entries(users).map(([id, name]) => ({
+        id,
+        name: name || id,
+        email: id,
+        role: 'member' // Базовая роль для совместимости
+    }));
+
+    // Фильтруем только участников проекта
+    const projectParticipants = usersList.filter(user => 
+        project?.participants?.includes(user.id)
+    );
+
+    const handleAssigneeChange = (selectedUsers) => {
+        // Для исполнителя берем только первого выбранного пользователя
+        setNewTask(prev => ({
+            ...prev,
+            assignee: selectedUsers.length > 0 ? selectedUsers[0] : ''
+        }));
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!newTask.title.trim()) return;
 
-        await onAdd(newTask);
+        setLoading(true);
+        try {
+            await onAdd(newTask);
+            setNewTask({
+                title: '',
+                description: '',
+                assignee: '',
+                priority: 'medium',
+                startDate: '',
+                dueDate: '',
+                status: 'not started',
+                locationId: ''
+            });
+            onClose();
+        } catch (error) {
+            console.error('Error creating task:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const resetForm = () => {
         setNewTask({
             title: '',
             description: '',
@@ -403,10 +482,12 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold">Новая задача</h3>
                     <button
-                        onClick={onClose}
+                        onClick={resetForm}
                         className="text-gray-400 hover:text-gray-600"
                     >
-                        ✕
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                     </button>
                 </div>
 
@@ -423,6 +504,7 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
                             className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Введите название задачи"
                             required
+                            disabled={loading}
                         />
                     </div>
 
@@ -437,27 +519,30 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
                             className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             rows="3"
                             placeholder="Описание задачи"
+                            disabled={loading}
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        {/* Assignee */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Assignee with ParticipantSelector */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Исполнитель
-                            </label>
-                            <select
-                                value={newTask.assignee}
-                                onChange={(e) => setNewTask(prev => ({ ...prev, assignee: e.target.value }))}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="">Выберите исполнителя</option>
-                                {project?.participants?.map((participantId) => (
-                                    <option key={participantId} value={participantId}>
-                                        {users[participantId] || participantId}
-                                    </option>
-                                ))}
-                            </select>
+                            <ParticipantSelector
+                                users={projectParticipants}
+                                selectedParticipants={newTask.assignee ? [newTask.assignee] : []}
+                                onParticipantsChange={handleAssigneeChange}
+                                allowMultiple={false}
+                                label="Исполнитель"
+                                placeholder="Поиск исполнителя..."
+                                maxHeight="150px"
+                                showSelectedCount={false}
+                                className="w-full"
+                            />
+                            
+                            {projectParticipants.length === 0 && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                    В проекте нет участников для назначения
+                                </div>
+                            )}
                         </div>
 
                         {/* Priority */}
@@ -469,16 +554,17 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
                                 value={newTask.priority}
                                 onChange={(e) => setNewTask(prev => ({ ...prev, priority: e.target.value }))}
                                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                disabled={loading}
                             >
-                                <option value="low">Низкий</option>
-                                <option value="medium">Средний</option>
-                                <option value="high">Высокий</option>
-                                <option value="critical">Критический</option>
+                                <option value="low">🟢 Низкий</option>
+                                <option value="medium">🟡 Средний</option>
+                                <option value="high">🔴 Высокий</option>
+                                <option value="critical">🟣 Критический</option>
                             </select>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Start Date */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -489,6 +575,7 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
                                 value={newTask.startDate}
                                 onChange={(e) => setNewTask(prev => ({ ...prev, startDate: e.target.value }))}
                                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                disabled={loading}
                             />
                         </div>
 
@@ -502,8 +589,26 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
                                 value={newTask.dueDate}
                                 onChange={(e) => setNewTask(prev => ({ ...prev, dueDate: e.target.value }))}
                                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                disabled={loading}
                             />
                         </div>
+                    </div>
+
+                    {/* Status */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Статус
+                        </label>
+                        <select
+                            value={newTask.status}
+                            onChange={(e) => setNewTask(prev => ({ ...prev, status: e.target.value }))}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={loading}
+                        >
+                            <option value="not started">Не начата</option>
+                            <option value="in progress">В процессе</option>
+                            <option value="completed">Завершена</option>
+                        </select>
                     </div>
 
                     {/* Location */}
@@ -515,28 +620,61 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
                             value={newTask.locationId}
                             onChange={(e) => setNewTask(prev => ({ ...prev, locationId: e.target.value }))}
                             className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={loading}
                         >
                             <option value="">Без локации</option>
                             {project?.locations?.map((location) => (
                                 <option key={location.id} value={location.id}>
-                                    {location.name}
+                                    📍 {location.name}
                                 </option>
                             ))}
                         </select>
                     </div>
 
+                    {/* Selected Assignee Display */}
+                    {newTask.assignee && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                                        {(users[newTask.assignee] || newTask.assignee).charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-medium text-blue-900">
+                                            Исполнитель: {users[newTask.assignee] || newTask.assignee}
+                                        </div>
+                                        <div className="text-xs text-blue-600">
+                                            Задача будет назначена этому пользователю
+                                        </div>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setNewTask(prev => ({ ...prev, assignee: '' }))}
+                                    className="text-blue-400 hover:text-blue-600"
+                                    disabled={loading}
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="flex gap-3 pt-4">
                         <button
                             type="submit"
-                            disabled={!newTask.title.trim()}
+                            disabled={!newTask.title.trim() || loading}
                             className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
-                            Создать задачу
+                            {loading ? 'Создается...' : 'Создать задачу'}
                         </button>
                         <button
                             type="button"
-                            onClick={onClose}
-                            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                            onClick={resetForm}
+                            disabled={loading}
+                            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:opacity-50 transition-colors"
                         >
                             Отмена
                         </button>
@@ -759,6 +897,23 @@ export default function ProjectTasks() {
                             </button>
                         </div>
                     </div>
+
+                    {/* Project Info */}
+                    {project && (
+                        <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-lg font-semibold text-gray-900">{project.title}</h2>
+                                    <p className="text-sm text-gray-600">{project.description}</p>
+                                </div>
+                                <div className="flex gap-4 text-sm text-gray-600">
+                                    {displayDate(project.createdAt, 'Создан')}
+                                    {project.startDate && displayDate(project.startDate, 'Начало')}
+                                    {project.endDate && displayDate(project.endDate, 'Конец')}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Controls */}
                     <TaskControls

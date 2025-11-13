@@ -6,9 +6,29 @@ import { app, db } from "@/app/api/firebase";
 import { collection, getDocs, doc, getDoc, updateDoc, addDoc } from "firebase/firestore";
 import Sidebar from "@/app/components/sidebar";
 import Navbar from "@/app/components/navbar";
+import ParticipantSelector from "@/app/components/participantSelector";
 import { useStrings } from "@/app/hooks/useStrings";
 
-// Компонент модального окна для создания проекта
+// ИСПРАВЛЕНИЕ: Добавляем функцию formatDate
+const formatDate = (dateString) => {
+    if (!dateString) return '';
+    
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'Некорректная дата';
+        
+        return date.toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        });
+    } catch (error) {
+        console.error('Error formatting date:', error);
+        return 'Ошибка даты';
+    }
+};
+
+// Обновленный компонент модального окна для создания проекта с ParticipantSelector
 const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
     const [projectData, setProjectData] = useState({
         title: '',
@@ -24,10 +44,13 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
 
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [currentUser, setCurrentUser] = useState(null);
 
     useEffect(() => {
         if (isOpen && orgId) {
             fetchUsers();
+            const auth = getAuth();
+            setCurrentUser(auth.currentUser);
         }
     }, [isOpen, orgId]);
 
@@ -70,13 +93,26 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
         }
     };
 
-    const handleParticipantToggle = (userId) => {
+    const handleParticipantsChange = (participants) => {
         setProjectData(prev => ({
             ...prev,
-            participants: prev.participants.includes(userId)
-                ? prev.participants.filter(id => id !== userId)
-                : [...prev.participants, userId]
+            participants
         }));
+    };
+
+    const resetForm = () => {
+        setProjectData({
+            title: '',
+            description: '',
+            startDate: '',
+            endDate: '',
+            status: 'not started',
+            priority: 'medium',
+            category: '',
+            budget: '',
+            participants: []
+        });
+        onClose();
     };
 
     if (!isOpen) return null;
@@ -87,7 +123,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-semibold">Создать новый проект</h2>
                     <button
-                        onClick={onClose}
+                        onClick={resetForm}
                         className="text-gray-400 hover:text-gray-600"
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,6 +146,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                             }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Введите название проекта"
+                            disabled={loading}
                         />
                     </div>
 
@@ -125,10 +162,11 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             rows="3"
                             placeholder="Описание проекта и его целей"
+                            disabled={loading}
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Дата начала */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -140,6 +178,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                                 onChange={(e) => setProjectData(prev => ({ ...prev, startDate: e.target.value }))
                                 }
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                disabled={loading}
                             />
                         </div>
 
@@ -154,11 +193,12 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                                 onChange={(e) => setProjectData(prev => ({ ...prev, endDate: e.target.value }))
                                 }
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                disabled={loading}
                             />
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Приоритет */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -169,11 +209,12 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                                 onChange={(e) => setProjectData(prev => ({ ...prev, priority: e.target.value }))
                                 }
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                disabled={loading}
                             >
-                                <option value="low">Низкий</option>
-                                <option value="medium">Средний</option>
-                                <option value="high">Высокий</option>
-                                <option value="critical">Критический</option>
+                                <option value="low">🟢 Низкий</option>
+                                <option value="medium">🟡 Средний</option>
+                                <option value="high">🔴 Высокий</option>
+                                <option value="critical">🟣 Критический</option>
                             </select>
                         </div>
 
@@ -189,6 +230,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                                 }
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 placeholder="Например: Разработка, Маркетинг"
+                                disabled={loading}
                             />
                         </div>
                     </div>
@@ -205,36 +247,26 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                             }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             placeholder="Например: 100,000 руб"
+                            disabled={loading}
                         />
                     </div>
 
-                    {/* Участники проекта */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Участники проекта
-                        </label>
-                        <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-3 space-y-2">
-                            {users.length === 0 ? (
-                                <p className="text-sm text-gray-500">Загрузка пользователей...</p>
-                            ) : (
-                                users.map((user) => (
-                                    <label key={user.id} className="flex items-center">
-                                        <input
-                                            type="checkbox"
-                                            checked={projectData.participants.includes(user.id)}
-                                            onChange={() => handleParticipantToggle(user.id)}
-                                            className="mr-2"
-                                        />
-                                        <span className="text-sm">
-                                            {user.name || user.email}
-                                        </span>
-                                    </label>
-                                ))
-                            )}
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                            Выберите участников проекта из организации
-                        </p>
+                    {/* НОВЫЙ: Участники проекта с ParticipantSelector */}
+                    <ParticipantSelector
+                        users={users}
+                        selectedParticipants={projectData.participants}
+                        onParticipantsChange={handleParticipantsChange}
+                        excludeUserIds={currentUser ? [currentUser.uid] : []}
+                        label="Участники проекта"
+                        placeholder="Поиск участников по имени, email или роли..."
+                        maxHeight="200px"
+                        showSelectedCount={true}
+                        allowMultiple={true}
+                        className="w-full"
+                    />
+
+                    <div className="text-xs text-gray-500">
+                        Создатель проекта автоматически становится участником
                     </div>
 
                     {/* Кнопки */}
@@ -248,7 +280,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                         </button>
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={resetForm}
                             disabled={loading}
                             className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:opacity-50 transition-colors"
                         >
@@ -264,15 +296,6 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
 const ProjectCard = ({ project, onProjectUpdate }) => {
     const router = useRouter();
     const [isUpdating, setIsUpdating] = useState(false);
-
-    const formatDate = (date) => {
-        if (!date) return '';
-        try {
-            return new Date(date).toLocaleDateString('ru-RU');
-        } catch (error) {
-            return date;
-        }
-    };
 
     const getPriorityColor = (priority) => {
         switch (priority?.toLowerCase()) {
@@ -494,6 +517,10 @@ export default function Projects() {
         try {
             const newProject = {
                 ...projectData,
+                // Автоматически добавляем создателя в участники
+                participants: projectData.participants.includes(currentUser.uid) 
+                    ? projectData.participants 
+                    : [...projectData.participants, currentUser.uid],
                 createdAt: new Date().toISOString(),
                 createdBy: currentUser.uid,
                 createdByName: currentUser.displayName || currentUser.email,
