@@ -3,148 +3,427 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { app, db } from "@/app/api/firebase";
-import { collection, getDocs, doc, getDoc, updateDoc } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, updateDoc, addDoc } from "firebase/firestore";
 import Sidebar from "@/app/components/sidebar";
 import Navbar from "@/app/components/navbar";
 import { useStrings } from "@/app/hooks/useStrings";
 
+// Компонент модального окна для создания проекта
+const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
+    const [projectData, setProjectData] = useState({
+        title: '',
+        description: '',
+        startDate: '',
+        endDate: '',
+        status: 'not started',
+        priority: 'medium',
+        category: '',
+        budget: '',
+        participants: []
+    });
 
-const ProjectListItem = ({ project, onProjectUpdate }) => {
-    const router = useRouter();
-    const { t } = useStrings();
-    const [isCompleting, setIsCompleting] = useState(false);
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(false);
 
-    const getStatusColor = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'active':
-                return 'border-black';
-            case 'completed':
-                return 'border-green-400';
-            case 'upcoming':
-            case 'in progress':
-                return 'border-yellow-400';
-            default:
-                return 'border-gray-300';
+    useEffect(() => {
+        if (isOpen && orgId) {
+            fetchUsers();
+        }
+    }, [isOpen, orgId]);
+
+    const fetchUsers = async () => {
+        try {
+            const usersSnapshot = await getDocs(collection(db, `organizations/${orgId}/users`));
+            const usersList = usersSnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setUsers(usersList);
+        } catch (error) {
+            console.error('Error fetching users:', error);
         }
     };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!projectData.title.trim()) return;
+
+        setLoading(true);
+        try {
+            await onSubmit(projectData);
+            setProjectData({
+                title: '',
+                description: '',
+                startDate: '',
+                endDate: '',
+                status: 'not started',
+                priority: 'medium',
+                category: '',
+                budget: '',
+                participants: []
+            });
+            onClose();
+        } catch (error) {
+            console.error('Error creating project:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleParticipantToggle = (userId) => {
+        setProjectData(prev => ({
+            ...prev,
+            participants: prev.participants.includes(userId)
+                ? prev.participants.filter(id => id !== userId)
+                : [...prev.participants, userId]
+        }));
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-semibold">Создать новый проект</h2>
+                    <button
+                        onClick={onClose}
+                        className="text-gray-400 hover:text-gray-600"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Название проекта */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Название проекта *
+                        </label>
+                        <input
+                            type="text"
+                            required
+                            value={projectData.title}
+                            onChange={(e) => setProjectData(prev => ({ ...prev, title: e.target.value }))
+                            }
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Введите название проекта"
+                        />
+                    </div>
+
+                    {/* Описание */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Описание
+                        </label>
+                        <textarea
+                            value={projectData.description}
+                            onChange={(e) => setProjectData(prev => ({ ...prev, description: e.target.value }))
+                            }
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            rows="3"
+                            placeholder="Описание проекта и его целей"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        {/* Дата начала */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Дата начала
+                            </label>
+                            <input
+                                type="date"
+                                value={projectData.startDate}
+                                onChange={(e) => setProjectData(prev => ({ ...prev, startDate: e.target.value }))
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+
+                        {/* Дата окончания */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Дата окончания
+                            </label>
+                            <input
+                                type="date"
+                                value={projectData.endDate}
+                                onChange={(e) => setProjectData(prev => ({ ...prev, endDate: e.target.value }))
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        {/* Приоритет */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Приоритет
+                            </label>
+                            <select
+                                value={projectData.priority}
+                                onChange={(e) => setProjectData(prev => ({ ...prev, priority: e.target.value }))
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="low">Низкий</option>
+                                <option value="medium">Средний</option>
+                                <option value="high">Высокий</option>
+                                <option value="critical">Критический</option>
+                            </select>
+                        </div>
+
+                        {/* Категория */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Категория
+                            </label>
+                            <input
+                                type="text"
+                                value={projectData.category}
+                                onChange={(e) => setProjectData(prev => ({ ...prev, category: e.target.value }))
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Например: Разработка, Маркетинг"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Бюджет */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Бюджет (необязательно)
+                        </label>
+                        <input
+                            type="text"
+                            value={projectData.budget}
+                            onChange={(e) => setProjectData(prev => ({ ...prev, budget: e.target.value }))
+                            }
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Например: 100,000 руб"
+                        />
+                    </div>
+
+                    {/* Участники проекта */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Участники проекта
+                        </label>
+                        <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-3 space-y-2">
+                            {users.length === 0 ? (
+                                <p className="text-sm text-gray-500">Загрузка пользователей...</p>
+                            ) : (
+                                users.map((user) => (
+                                    <label key={user.id} className="flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={projectData.participants.includes(user.id)}
+                                            onChange={() => handleParticipantToggle(user.id)}
+                                            className="mr-2"
+                                        />
+                                        <span className="text-sm">
+                                            {user.name || user.email}
+                                        </span>
+                                    </label>
+                                ))
+                            )}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Выберите участников проекта из организации
+                        </p>
+                    </div>
+
+                    {/* Кнопки */}
+                    <div className="flex gap-3 pt-4 border-t">
+                        <button
+                            type="submit"
+                            disabled={!projectData.title.trim() || loading}
+                            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            {loading ? 'Создаем...' : 'Создать проект'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            disabled={loading}
+                            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:opacity-50 transition-colors"
+                        >
+                            Отмена
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+const ProjectCard = ({ project, onProjectUpdate }) => {
+    const router = useRouter();
+    const [isUpdating, setIsUpdating] = useState(false);
 
     const formatDate = (date) => {
         if (!date) return '';
         try {
-            return new Date(date).toLocaleDateString('en-GB', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
+            return new Date(date).toLocaleDateString('ru-RU');
         } catch (error) {
             return date;
         }
     };
 
-    const handleCompleteProject = async () => {
-        if (!confirm(t('projects.confirmComplete') || 'Вы уверены, что хотите завершить этот проект?')) {
-            return;
+    const getPriorityColor = (priority) => {
+        switch (priority?.toLowerCase()) {
+            case 'critical': return 'bg-red-100 border-l-red-500';
+            case 'high': return 'bg-orange-100 border-l-orange-500';
+            case 'medium': return 'bg-yellow-100 border-l-yellow-500';
+            case 'low': return 'bg-green-100 border-l-green-500';
+            default: return 'bg-gray-100 border-l-gray-500';
         }
+    };
 
-        setIsCompleting(true);
+    const handleStatusChange = async (newStatus) => {
+        setIsUpdating(true);
         try {
-            // Обновляем статус проекта на "completed"
-            await updateDoc(doc(db, `organizations/${project.orgId}/projects/${project.id}`), {
-                status: 'completed',
-                completedAt: new Date().toISOString(),
-                completedBy: project.currentUserId
-            });
-
-            console.log('Project completed successfully');
+            const updateData = { status: newStatus };
             
-            // Обновляем список проектов
+            if (newStatus === 'completed') {
+                updateData.completedAt = new Date().toISOString();
+                updateData.completedBy = project.currentUserId;
+            }
+
+            await updateDoc(doc(db, `organizations/${project.orgId}/projects/${project.id}`), updateData);
+            
             if (onProjectUpdate) {
                 onProjectUpdate();
             }
         } catch (error) {
-            console.error('Error completing project:', error);
-            alert(t('projects.errorCompleting') || 'Ошибка при завершении проекта');
+            console.error('Error updating project status:', error);
         } finally {
-            setIsCompleting(false);
+            setIsUpdating(false);
         }
     };
 
     const isCompleted = project.status?.toLowerCase() === 'completed';
-    const canComplete = !isCompleted && (project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in progress');
+    const isNotStarted = project.status?.toLowerCase() === 'not started' || project.status?.toLowerCase() === 'upcoming';
 
     return (
-        <div className={`bg-white rounded-lg border-2 ${getStatusColor(project.status)} mb-4`}>
-            <div className="p-6">
-                <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                            <h3 className="text-xl font-semibold text-gray-900">{project.title}</h3>
-                            {isCompleted && (
-                                <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                                    ✓ Завершен
-                                </span>
-                            )}
-                        </div>
-                        <p className="text-sm text-gray-600 mt-1">
-                            {formatDate(project.startDate)}-{formatDate(project.endDate)}
-                        </p>
-                        {project.completedAt && (
-                            <p className="text-xs text-green-600 mt-1">
-                                Завершен: {formatDate(project.completedAt)}
-                            </p>
-                        )}
-                    </div>
-                    <div className="text-right">
-                        <p className="font-medium text-gray-900">{project.organization}</p>
-                    </div>
+        <div className={`bg-white border-l-4 rounded-lg p-4 mb-3 shadow-sm hover:shadow-md transition-shadow ${getPriorityColor(project.priority)}`}>
+            <div className="flex justify-between items-start mb-2">
+                <h4 className="font-semibold text-gray-900 text-sm leading-tight">{project.title}</h4>
+                {project.priority && (
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        project.priority === 'critical' ? 'bg-red-100 text-red-800' :
+                        project.priority === 'high' ? 'bg-orange-100 text-orange-800' :
+                        project.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-green-100 text-green-800'
+                    }`}>
+                        {project.priority === 'critical' ? 'Критический' :
+                         project.priority === 'high' ? 'Высокий' :
+                         project.priority === 'medium' ? 'Средний' : 'Низкий'}
+                    </span>
+                )}
+            </div>
+
+            {project.description && (
+                <p className="text-xs text-gray-600 mb-2 line-clamp-2">{project.description}</p>
+            )}
+
+            <div className="text-xs text-gray-500 mb-3">
+                {formatDate(project.startDate)} - {formatDate(project.endDate)}
+            </div>
+
+            {project.category && (
+                <div className="mb-2">
+                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
+                        {project.category}
+                    </span>
                 </div>
-                
-                <div className="flex justify-between items-center mt-4">
-                    <div className="flex gap-3">
-                        <button 
-                            onClick={() => router.push(`/pages/projects/${project.id}`)}
-                            className="text-blue-600 hover:text-blue-800 transition-colors"
-                        >
-                            {t('projects.openProject')} &gt;&gt;
-                        </button>
-                        
-                        {canComplete && (
-                            <button
-                                onClick={handleCompleteProject}
-                                disabled={isCompleting}
-                                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                                    isCompleting
-                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                        : 'bg-green-600 text-white hover:bg-green-700'
-                                }`}
+            )}
+
+            {project.participants && project.participants.length > 0 && (
+                <div className="mb-3">
+                    <p className="text-xs text-gray-500 mb-1">Участники:</p>
+                    <div className="flex -space-x-2">
+                        {project.participants.slice(0, 3).map((participantId, index) => (
+                            <div
+                                key={index}
+                                className="w-6 h-6 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center text-white text-xs"
+                                title={participantId}
                             >
-                                {isCompleting 
-                                    ? (t('projects.completing') || 'Завершаем...')
-                                    : (t('projects.completeProject') || 'Завершить проект')
-                                }
-                            </button>
-                        )}
-                        
-                        {isCompleted && (
-                            <div className="flex items-center text-green-600 text-sm">
-                                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                </svg>
-                                Проект завершен
+                                {participantId.charAt(0).toUpperCase()}
+                            </div>
+                        ))}
+                        {project.participants.length > 3 && (
+                            <div className="w-6 h-6 bg-gray-500 rounded-full border-2 border-white flex items-center justify-center text-white text-xs">
+                                +{project.participants.length - 3}
                             </div>
                         )}
                     </div>
-                    
-                    <p className={`text-sm font-medium px-2 py-1 rounded ${
-                        isCompleted 
-                            ? 'bg-green-100 text-green-800'
-                            : project.status?.toLowerCase() === 'active'
-                            ? 'bg-black text-white'
-                            : 'bg-gray-100 text-gray-800'
-                    }`}>
-                        {t('projects.status')}: {project.status}
-                    </p>
                 </div>
+            )}
+
+            <div className="flex justify-between items-center">
+                <button 
+                    onClick={() => router.push(`/pages/projects/${project.id}`)}
+                    className="text-blue-600 text-xs hover:text-blue-800 transition-colors"
+                >
+                    Открыть проект
+                </button>
+                
+                {isNotStarted ? (
+                    <button
+                        onClick={() => handleStatusChange('in progress')}
+                        disabled={isUpdating}
+                        className="text-xs px-3 py-1 text-white bg-green-500 rounded hover:bg-green-600 disabled:opacity-50 transition-colors"
+                    >
+                        {isUpdating ? '...' : 'Начать'}
+                    </button>
+                ) : !isCompleted ? (
+                    <button
+                        onClick={() => handleStatusChange('completed')}
+                        disabled={isUpdating}
+                        className="text-xs px-3 py-1 text-white bg-green-500 rounded hover:bg-green-600 disabled:opacity-50 transition-colors"
+                    >
+                        {isUpdating ? '...' : 'Завершить'}
+                    </button>
+                ) : (
+                    <span className="text-xs px-3 py-1 bg-green-100 text-green-800 rounded">
+                        Завершен
+                    </span>
+                )}
+            </div>
+        </div>
+    );
+};
+
+const KanbanColumn = ({ title, projects, count, onProjectUpdate }) => {
+    return (
+        <div className="flex-1 bg-gray-50 rounded-lg p-4">
+            <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-200">
+                <h3 className="font-semibold text-gray-800">{title}</h3>
+                <span className="bg-white px-2 py-1 rounded-full text-sm font-medium text-gray-600">
+                    {count}
+                </span>
+            </div>
+            
+            <div className="min-h-[500px]">
+                {projects.map((project) => (
+                    <ProjectCard 
+                        key={project.id} 
+                        project={project}
+                        onProjectUpdate={onProjectUpdate}
+                    />
+                ))}
+                
+                {projects.length === 0 && (
+                    <div className="text-center text-gray-400 text-sm mt-12">
+                        <div className="text-4xl mb-2">📋</div>
+                        <p>Нет проектов</p>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -158,12 +437,12 @@ export default function Projects() {
     const [loading, setLoading] = useState(true);
     const [orgId, setOrgId] = useState(null);
     const [currentUser, setCurrentUser] = useState(null);
-    const [filterStatus, setFilterStatus] = useState('all');
+    const [viewMode, setViewMode] = useState('kanban');
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     // Получение текущей организации пользователя
     const getCurrentUserOrg = async (userId) => {
         try {
-            // Ищем пользователя в подколлекциях organizations/{orgId}/users
             const organizationsSnapshot = await getDocs(collection(db, 'organizations'));
             
             for (const orgDoc of organizationsSnapshot.docs) {
@@ -184,17 +463,13 @@ export default function Projects() {
 
     const fetchProjects = async (organizationId, userId) => {
         try {
-            // Получаем название организации
             const orgDoc = await getDoc(doc(db, `organizations/${organizationId}`));
             const orgName = orgDoc.exists() ? orgDoc.data().name : 'Organization';
             
             const querySnapshot = await getDocs(collection(db, `organizations/${organizationId}/projects`));
             
-            console.log(`Found ${querySnapshot.docs.length} projects in organization`);
-            
             const projectsList = querySnapshot.docs.map(doc => {
                 const data = doc.data();
-                console.log('Project data:', doc.id, data);
                 return {
                     id: doc.id,
                     ...data,
@@ -204,15 +479,36 @@ export default function Projects() {
                 };
             });
             
-            console.log(`Total projects to display: ${projectsList.length}`);
-            console.log('Current user ID:', userId);
+            // Сортируем по дате создания (новые сначала)
+            projectsList.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
             
-            // Показываем все проекты без фильтрации (временно для отладки)
             setProjects(projectsList);
         } catch (error) {
             console.error('Error fetching projects:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleCreateProject = async (projectData) => {
+        try {
+            const newProject = {
+                ...projectData,
+                createdAt: new Date().toISOString(),
+                createdBy: currentUser.uid,
+                createdByName: currentUser.displayName || currentUser.email,
+                updatedAt: new Date().toISOString(),
+                tasks: [],
+                locations: []
+            };
+
+            await addDoc(collection(db, `organizations/${orgId}/projects`), newProject);
+            
+            // Обновляем список проектов
+            await fetchProjects(orgId, currentUser.uid);
+        } catch (error) {
+            console.error('Error creating project:', error);
+            throw error;
         }
     };
 
@@ -222,16 +518,21 @@ export default function Projects() {
         }
     };
 
-    const filteredProjects = projects.filter(project => {
-        if (filterStatus === 'all') return true;
-        return project.status?.toLowerCase() === filterStatus;
-    });
+    // Группировка проектов
+    const groupedProjects = {
+        upcoming: projects.filter(p => p.status?.toLowerCase() === 'not started' || p.status?.toLowerCase() === 'upcoming'),
+        'in progress': projects.filter(p => 
+            p.status?.toLowerCase() === 'in progress' || 
+            p.status?.toLowerCase() === 'active'
+        ),
+        completed: projects.filter(p => p.status?.toLowerCase() === 'completed')
+    };
 
     const projectStats = {
         total: projects.length,
-        active: projects.filter(p => p.status?.toLowerCase() === 'active').length,
-        completed: projects.filter(p => p.status?.toLowerCase() === 'completed').length,
-        inProgress: projects.filter(p => p.status?.toLowerCase() === 'in progress').length
+        upcoming: groupedProjects.upcoming.length,
+        inProgress: groupedProjects['in progress'].length,
+        completed: groupedProjects.completed.length
     };
 
     useEffect(() => {
@@ -255,99 +556,222 @@ export default function Projects() {
         return () => unsubscribe();
     }, []);
 
+    if (loading) {
+        return (
+            <div className="flex h-screen bg-gray-50">
+                <Sidebar orgId={orgId} />
+                <div className="flex-1">
+                    <Navbar orgId={orgId} />
+                    <div className="p-8">
+                        <div className="text-center">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                            <p className="mt-4 text-gray-600">Загрузка проектов...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="flex h-screen bg-gray-50">
             <Sidebar orgId={orgId} />
-            <div className="flex-1">
+            <div className="flex-1 flex flex-col">
                 <Navbar orgId={orgId} />
-                <div className="p-8">
+                <div className="flex-1 p-6 overflow-auto">
                     <div className="mb-6">
-                        <h1 className="text-2xl font-bold mb-4 text-gray-900">{t('projects.title')}</h1>
-                        
-                        {/* Статистика проектов */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                            <div className="bg-white rounded-lg border p-4">
-                                <div className="text-2xl font-bold text-gray-900">{projectStats.total}</div>
-                                <div className="text-sm text-gray-600">Всего проектов</div>
-                            </div>
-                            <div className="bg-white rounded-lg border p-4">
-                                <div className="text-2xl font-bold text-blue-600">{projectStats.active}</div>
-                                <div className="text-sm text-gray-600">Активных</div>
-                            </div>
-                            <div className="bg-white rounded-lg border p-4">
-                                <div className="text-2xl font-bold text-yellow-600">{projectStats.inProgress}</div>
-                                <div className="text-sm text-gray-600">В процессе</div>
-                            </div>
-                            <div className="bg-white rounded-lg border p-4">
-                                <div className="text-2xl font-bold text-green-600">{projectStats.completed}</div>
-                                <div className="text-sm text-gray-600">Завершенных</div>
+                        <div className="flex justify-between items-center mb-6">
+                            <h1 className="text-3xl font-bold text-gray-900">Проекты</h1>
+                            
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setIsCreateModalOpen(true)}
+                                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Новый проект
+                                </button>
+
+                                <div className="flex bg-gray-200 rounded-lg p-1">
+                                    <button
+                                        onClick={() => setViewMode('kanban')}
+                                        className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                                            viewMode === 'kanban'
+                                                ? 'bg-white text-blue-600 shadow-sm'
+                                                : 'text-gray-600 hover:text-gray-900'
+                                        }`}
+                                    >
+                                        Kanban
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('list')}
+                                        className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                                            viewMode === 'list'
+                                                ? 'bg-white text-blue-600 shadow-sm'
+                                                : 'text-gray-600 hover:text-gray-900'
+                                        }`}
+                                    >
+                                        Список
+                                    </button>
+                                </div>
                             </div>
                         </div>
+                        
+                        {/* Статистика */}
+                        <div className="grid grid-cols-4 gap-6 mb-8">
+                            <div className="bg-white rounded-lg shadow-sm border p-6">
+                                <div className="flex items-center">
+                                    <div className="p-2 bg-blue-100 rounded-lg">
+                                        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                        </svg>
+                                    </div>
+                                    <div className="ml-4">
+                                        <div className="text-2xl font-bold text-gray-900">{projectStats.total}</div>
+                                        <div className="text-sm text-gray-600">Всего проектов</div>
+                                    </div>
+                                </div>
+                            </div>
 
-                        {/* Фильтры */}
-                        <div className="flex gap-2 mb-4">
-                            <button
-                                onClick={() => setFilterStatus('all')}
-                                className={`px-4 py-2 text-sm font-medium rounded-md ${
-                                    filterStatus === 'all'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                                }`}
-                            >
-                                Все ({projectStats.total})
-                            </button>
-                            <button
-                                onClick={() => setFilterStatus('active')}
-                                className={`px-4 py-2 text-sm font-medium rounded-md ${
-                                    filterStatus === 'active'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                                }`}
-                            >
-                                Активные ({projectStats.active})
-                            </button>
-                            <button
-                                onClick={() => setFilterStatus('in progress')}
-                                className={`px-4 py-2 text-sm font-medium rounded-md ${
-                                    filterStatus === 'in progress'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                                }`}
-                            >
-                                В процессе ({projectStats.inProgress})
-                            </button>
-                            <button
-                                onClick={() => setFilterStatus('completed')}
-                                className={`px-4 py-2 text-sm font-medium rounded-md ${
-                                    filterStatus === 'completed'
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                                }`}
-                            >
-                                Завершенные ({projectStats.completed})
-                            </button>
+                            <div className="bg-white rounded-lg shadow-sm border p-6">
+                                <div className="flex items-center">
+                                    <div className="p-2 bg-gray-100 rounded-lg">
+                                        <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <div className="ml-4">
+                                        <div className="text-2xl font-bold text-gray-900">{projectStats.upcoming}</div>
+                                        <div className="text-sm text-gray-600">Предстоящих</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-lg shadow-sm border p-6">
+                                <div className="flex items-center">
+                                    <div className="p-2 bg-yellow-100 rounded-lg">
+                                        <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                        </svg>
+                                    </div>
+                                    <div className="ml-4">
+                                        <div className="text-2xl font-bold text-gray-900">{projectStats.inProgress}</div>
+                                        <div className="text-sm text-gray-600">В процессе</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-lg shadow-sm border p-6">
+                                <div className="flex items-center">
+                                    <div className="p-2 bg-green-100 rounded-lg">
+                                        <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <div className="ml-4">
+                                        <div className="text-2xl font-bold text-gray-900">{projectStats.completed}</div>
+                                        <div className="text-sm text-gray-600">Завершенных</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    {loading ? (
-                        <div className="text-center text-gray-700">{t('loading')}...</div>
-                    ) : filteredProjects.length === 0 ? (
-                        <div className="text-center text-gray-500">
-                            {filterStatus === 'all' ? 'No projects found' : `Нет проектов со статусом "${filterStatus}"`}
+                    {projects.length === 0 ? (
+                        <div className="text-center py-12">
+                            <div className="text-6xl mb-4">📋</div>
+                            <h3 className="text-xl font-medium text-gray-900 mb-2">Пока нет проектов</h3>
+                            <p className="text-gray-600 mb-6">Создайте свой первый проект для начала работы</p>
+                            <button
+                                onClick={() => setIsCreateModalOpen(true)}
+                                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                                Создать первый проект
+                            </button>
                         </div>
                     ) : (
-                        <div className="max-w-4xl">
-                            {filteredProjects.map((project) => (
-                                <ProjectListItem 
-                                    key={project.id} 
-                                    project={project}
-                                    onProjectUpdate={handleProjectUpdate}
-                                />
-                            ))}
-                        </div>
+                        <>
+                            {/* Kanban доска */}
+                            {viewMode === 'kanban' && (
+                                <div className="grid grid-cols-3 gap-6">
+                                    <KanbanColumn
+                                        title="Предстоящие"
+                                        projects={groupedProjects.upcoming}
+                                        count={projectStats.upcoming}
+                                        onProjectUpdate={handleProjectUpdate}
+                                    />
+                                    
+                                    <KanbanColumn
+                                        title="В процессе"
+                                        projects={groupedProjects['in progress']}
+                                        count={projectStats.inProgress}
+                                        onProjectUpdate={handleProjectUpdate}
+                                    />
+                                    
+                                    <KanbanColumn
+                                        title="Завершенные"
+                                        projects={groupedProjects.completed}
+                                        count={projectStats.completed}
+                                        onProjectUpdate={handleProjectUpdate}
+                                    />
+                                </div>
+                            )}
+
+                            {/* Вид списка */}
+                            {viewMode === 'list' && (
+                                <div className="space-y-4">
+                                    {projects.map((project) => (
+                                        <div key={project.id} className="bg-white rounded-lg shadow-sm border p-6 hover:shadow-md transition-shadow">
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-3 mb-2">
+                                                        <h3 className="text-lg font-semibold text-gray-900">{project.title}</h3>
+                                                        {project.priority && (
+                                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                                project.priority === 'critical' ? 'bg-red-100 text-red-800' :
+                                                                project.priority === 'high' ? 'bg-orange-100 text-orange-800' :
+                                                                project.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                                                'bg-green-100 text-green-800'
+                                                            }`}>
+                                                                {project.priority === 'critical' ? 'Критический' :
+                                                                 project.priority === 'high' ? 'Высокий' :
+                                                                 project.priority === 'medium' ? 'Средний' : 'Низкий'}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-gray-600 mb-3">{project.description || 'Описание не указано'}</p>
+                                                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                                                        <span>Статус: <strong>{project.status}</strong></span>
+                                                        <span>Создан: {formatDate(project.createdAt)}</span>
+                                                        {project.startDate && <span>Начало: {formatDate(project.startDate)}</span>}
+                                                        {project.endDate && <span>Конец: {formatDate(project.endDate)}</span>}
+                                                    </div>
+                                                </div>
+                                                <button 
+                                                    onClick={() => router.push(`/pages/projects/${project.id}`)}
+                                                    className="text-blue-600 hover:text-blue-800 font-medium"
+                                                >
+                                                    Открыть →
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>
+
+            {/* Модальное окно создания проекта */}
+            <CreateProjectModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onSubmit={handleCreateProject}
+                orgId={orgId}
+            />
         </div>
     );
 }

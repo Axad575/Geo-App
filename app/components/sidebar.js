@@ -6,12 +6,6 @@ export default function Sidebar() {
     const router = useRouter();
     const { t } = useStrings();
 
-    const libraryBtn = (e) => {
-        e.preventDefault();
-        console.log("Library button clicked");
-        router.push("/pages/library");
-    };
-
     const projectsBtn = (e) => {
         e.preventDefault();
         console.log("Projects button clicked");
@@ -43,9 +37,6 @@ export default function Sidebar() {
         <div className="p-4 text-2xl font-semibold">Geo-Note</div>
 
         <div className="flex flex-col space-y-4 mt-4 px-4">
-          <button onClick={libraryBtn} className="bg-green-400 text-black py-2 rounded-md hover:bg-green-300 transition">
-            {t('nav.library')}
-          </button>
           <button onClick={projectsBtn} className="bg-green-400 text-black py-2 rounded-md hover:bg-green-300 transition">
             {t('nav.projects')}
           </button>
