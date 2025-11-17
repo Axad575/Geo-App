@@ -500,6 +500,7 @@ export default function Notes() {
     const [currentUser, setCurrentUser] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [filterBy, setFilterBy] = useState("all");
+    const [selectedNote, setSelectedNote] = useState(null); // Для просмотра заметки справа
 
     // Новые состояния для библиотеки
     const [documents, setDocuments] = useState([]);
@@ -669,6 +670,10 @@ export default function Notes() {
     const handleEditNote = (note) => {
         setEditingNote(note);
         setIsEditModalOpen(true);
+    };
+
+    const handleSelectNote = (note) => {
+        setSelectedNote(note);
     };
 
     // Фильтры
@@ -876,64 +881,128 @@ export default function Notes() {
                                 )}
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {filteredNotes.map((note) => (
-                                    <div
-                                        key={note.id}
-                                        className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 cursor-pointer"
-                                    >
-                                        <div className="flex justify-between items-start mb-3">
-                                            <h3 
-                                                className="text-lg font-semibold text-gray-900 line-clamp-2 flex-1"
-                                                onClick={() => handleEditNote(note)}
+                            <div className="flex gap-4 h-[calc(100vh-280px)]">
+                                {/* Left Panel - Notes List */}
+                                <div className="w-80 bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
+                                    <div className="flex-1 overflow-y-auto">
+                                        {filteredNotes.map((note) => (
+                                            <div
+                                                key={note.id}
+                                                onClick={() => handleSelectNote(note)}
+                                                className={`p-4 border-b border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors ${
+                                                    selectedNote?.id === note.id ? 'bg-blue-50 border-l-4 border-l-blue-600' : ''
+                                                }`}
                                             >
-                                                {note.title}
-                                            </h3>
-                                            <div className="flex gap-2 ml-2">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleToggleFavorite(note.id, note.isFavorite);
-                                                    }}
-                                                    className={`p-1 rounded ${note.isFavorite ? 'text-yellow-500' : 'text-gray-400 hover:text-yellow-500'}`}
-                                                >
-                                                    <svg className="w-5 h-5" fill={note.isFavorite ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                                                </svg>
-                                                </button>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDeleteNote(note.id);
-                                                    }}
-                                                    className="p-1 text-gray-400 hover:text-red-500 rounded"
-                                                >
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div 
-                                            className="text-gray-600 mb-4 whitespace-pre-wrap"
-                                            onClick={() => handleEditNote(note)}
-                                        >
-                                            {truncateContent(note.content)}
-                                        </div>
-
-                                        <div className="flex justify-between items-center text-sm text-gray-500">
-                                            <span>{formatDate(note.updatedAt)}</span>
-                                            <div className="flex gap-2">
-                                                {note.category && (
-                                                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
-                                                        {note.category}
+                                                <div className="flex items-start justify-between mb-2">
+                                                    <h3 className="font-semibold text-gray-900 line-clamp-1 flex-1">
+                                                        {note.title}
+                                                    </h3>
+                                                    {note.isFavorite && (
+                                                        <svg className="w-4 h-4 text-yellow-500 flex shrink-0 ml-2" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                                        </svg>
+                                                    )}
+                                                </div>
+                                                <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                                                    {truncateContent(note.content, 80)}
+                                                </p>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs text-gray-500">
+                                                        {formatDate(note.updatedAt)}
                                                     </span>
-                                                )}
+                                                    {note.category && (
+                                                        <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs">
+                                                            {note.category}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Right Panel - Note Detail */}
+                                <div className="flex-1 bg-white rounded-lg shadow-md overflow-hidden">
+                                    {selectedNote ? (
+                                        <div className="h-full flex flex-col">
+                                            {/* Note Header */}
+                                            <div className="p-6 border-b border-gray-200">
+                                                <div className="flex items-start justify-between mb-4">
+                                                    <h1 className="text-2xl font-bold text-gray-900 flex-1">
+                                                        {selectedNote.title}
+                                                    </h1>
+                                                    <div className="flex gap-2 ml-4">
+                                                        <button
+                                                            onClick={() => handleToggleFavorite(selectedNote.id, selectedNote.isFavorite)}
+                                                            className={`p-2 rounded-lg transition-colors ${
+                                                                selectedNote.isFavorite 
+                                                                    ? 'text-yellow-500 bg-yellow-50 hover:bg-yellow-100' 
+                                                                    : 'text-gray-400 hover:text-yellow-500 hover:bg-gray-100'
+                                                            }`}
+                                                            title={selectedNote.isFavorite ? 'Убрать из избранного' : 'Добавить в избранное'}
+                                                        >
+                                                            <svg className="w-5 h-5" fill={selectedNote.isFavorite ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                                            </svg>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleEditNote(selectedNote)}
+                                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            title="Редактировать"
+                                                        >
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                            </svg>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                handleDeleteNote(selectedNote.id);
+                                                                setSelectedNote(null);
+                                                            }}
+                                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                            title="Удалить"
+                                                        >
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-4 text-sm text-gray-500">
+                                                    <span>Создано: {formatDate(selectedNote.createdAt)}</span>
+                                                    <span>•</span>
+                                                    <span>Обновлено: {formatDate(selectedNote.updatedAt)}</span>
+                                                    {selectedNote.category && (
+                                                        <>
+                                                            <span>•</span>
+                                                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
+                                                                {selectedNote.category}
+                                                            </span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Note Content */}
+                                            <div className="flex-1 overflow-y-auto p-6">
+                                                <div className="prose max-w-none">
+                                                    <pre className="whitespace-pre-wrap font-sans text-gray-700 leading-relaxed">
+                                                        {selectedNote.content}
+                                                    </pre>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ) : (
+                                        <div className="h-full flex items-center justify-center text-gray-400">
+                                            <div className="text-center">
+                                                <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                <p className="text-lg">Выберите заметку для просмотра</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )
                     ) : (
