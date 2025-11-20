@@ -12,7 +12,6 @@ const EditNoteModal = ({ isOpen, onClose, onSubmit, note }) => {
     const [attachedFiles, setAttachedFiles] = useState(note?.attachments || []);
     const [uploadingFiles, setUploadingFiles] = useState(false);
 
-    // Получаем локаль для форматирования даты в зависимости от языка
     const getLocale = () => {
         switch (language) {
             case 'ru': return 'ru-RU';
@@ -32,7 +31,6 @@ const EditNoteModal = ({ isOpen, onClose, onSubmit, note }) => {
         { key: 'other', label: t('notes.categories.other') }
     ];
 
-    // Initialize form data when note changes
     useEffect(() => {
         if (note) {
             setFormData({
@@ -44,7 +42,6 @@ const EditNoteModal = ({ isOpen, onClose, onSubmit, note }) => {
         }
     }, [note]);
 
-    // Reset form when modal closes
     useEffect(() => {
         if (!isOpen) {
             setFormData({
@@ -56,7 +53,6 @@ const EditNoteModal = ({ isOpen, onClose, onSubmit, note }) => {
         }
     }, [isOpen]);
 
-    // Prevent body scroll when modal is open
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
@@ -80,8 +76,10 @@ const EditNoteModal = ({ isOpen, onClose, onSubmit, note }) => {
         if (!formData.content.trim()) {
             alert(t('notes.pleaseEnterContent'));
             return;
-        }        if (!note?.id) {
-            alert('Error: Note ID not found');
+        }
+        
+        if (!note?.id) {
+            alert(t('error'));
             return;
         }
 
@@ -118,7 +116,6 @@ const EditNoteModal = ({ isOpen, onClose, onSubmit, note }) => {
 
     const handleUploadFiles = () => {
         setUploadingFiles(true);
-        // Здесь должна быть логика загрузки файлов
         setTimeout(() => {
             setUploadingFiles(false);
         }, 2000);
@@ -136,7 +133,7 @@ const EditNoteModal = ({ isOpen, onClose, onSubmit, note }) => {
             }}
         >
             <div 
-                className="bg-white  rounded-lg p-6 w-full max-w-2xl max-h-full overflow-auto my-auto mx-auto shadow-xl"
+                className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-full overflow-auto my-auto mx-auto shadow-xl"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center mb-3">
@@ -220,31 +217,32 @@ const EditNoteModal = ({ isOpen, onClose, onSubmit, note }) => {
                     {/* File Attachments */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            {t('notes.attachFiles')}
+                            {t('files.attachments')}
                         </label>
                         <div className="flex flex-col gap-2">
-                            {attachedFiles.length === 0 && (
-                                <span className="text-gray-500 text-sm">{t('notes.noFilesAttached')}</span>
-                            )}
-                            {attachedFiles.map((file, index) => (
-                                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
-                                    <div className="flex items-center gap-2">
-                                        <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M12 2a2 2 0 00-2 2v8H8a2 2 0 000 4h2v8a2 2 0 004 0v-8h2a2 2 0 000-4h-2V4a2 2 0 00-2-2z" />
-                                        </svg>
-                                        <span className="text-sm font-medium text-gray-900">{file.name}</span>
+                            {attachedFiles.length === 0 ? (
+                                <span className="text-gray-500 text-sm">{t('library.noFiles')}</span>
+                            ) : (
+                                attachedFiles.map((file, index) => (
+                                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                                        <div className="flex items-center gap-2">
+                                            <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
+                                            </svg>
+                                            <span className="text-sm font-medium text-gray-900">{file.name}</span>
+                                        </div>
+                                        <button
+                                            onClick={() => handleRemoveFile(file.name)}
+                                            className="text-red-600 hover:text-red-800 transition-colors"
+                                            type="button"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
                                     </div>
-                                    <button
-                                        onClick={() => handleRemoveFile(file.name)}
-                                        className="text-red-600 hover:text-red-800 transition-colors"
-                                        type="button"
-                                    >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
                         <div className="flex items-center gap-2 mt-3">
                             <label className="flex items-center cursor-pointer">
@@ -255,7 +253,7 @@ const EditNoteModal = ({ isOpen, onClose, onSubmit, note }) => {
                                     className="hidden"
                                 />
                                 <span className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
-                                    {t('notes.uploadFiles')}
+                                    {t('files.uploadFile')}
                                 </span>
                             </label>
                             {uploadingFiles && (
@@ -281,7 +279,7 @@ const EditNoteModal = ({ isOpen, onClose, onSubmit, note }) => {
                             onClick={onClose}
                             className="px-6 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
                         >
-                            {t('meetings.cancel')}
+                            {t('cancel')}
                         </button>
                         <button
                             type="submit"

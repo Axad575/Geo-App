@@ -154,7 +154,7 @@ const EditNotePage = () => {
             for (const file of Array.from(files)) {
                 // Проверка размера файла (максимум 10MB)
                 if (file.size > 10 * 1024 * 1024) {
-                    alert(`Файл ${file.name} слишком большой. Максимум 10MB.`);
+                    alert(t('notes.fileTooLarge').replace('{fileName}', file.name));
                     continue;
                 }
                 
@@ -165,7 +165,7 @@ const EditNotePage = () => {
             setAttachedFiles(prev => [...prev, ...uploadedFiles]);
         } catch (error) {
             console.error('File upload error:', error);
-            alert('Ошибка загрузки файлов');
+            alert(t('notes.fileUploadError'));
         } finally {
             setUploadingFiles(false);
         }
@@ -174,6 +174,14 @@ const EditNotePage = () => {
     // Функция удаления файла
     const removeFile = (index) => {
         setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+    };
+
+    // Функция для получения иконки файла
+    const getFileIcon = (file) => {
+        if (file.type?.startsWith('image/')) return '🖼️';
+        if (file.type?.includes('pdf')) return '📄';
+        if (file.name?.endsWith('.kml') || file.name?.endsWith('.gpx')) return '🗺️';
+        return '📎';
     };
 
     // Функция для добавления записи в историю действий
@@ -200,7 +208,7 @@ const EditNotePage = () => {
     // Обновление заметки
     const handleUpdateNote = async () => {
         if (!formData.title.trim()) {
-            alert('Пожалуйста, введите название заметки');
+            alert(t('notes.pleaseEnterTitle'));
             return;
         }
 
@@ -247,7 +255,7 @@ const EditNotePage = () => {
             router.push(`/pages/projects/${projectId}/notes/${noteId}`);
         } catch (error) {
             console.error('Error updating note:', error);
-            alert('Ошибка при обновлении заметки');
+            alert(t('notes.errorUpdatingNote'));
         } finally {
             setSaving(false);
         }
@@ -274,10 +282,10 @@ const EditNotePage = () => {
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
                             </svg>
-                            Отмена
+                            {t('cancel')}
                         </button>
-                        <h1 className="text-3xl font-bold">Редактировать заметку</h1>
-                        <p className="text-gray-600 mt-1">Проект: {project.title}</p>
+                        <h1 className="text-3xl font-bold">{t('notes.editNote')}</h1>
+                        <p className="text-gray-600 mt-1">{t('notes.project')}: {project.title}</p>
                     </div>
                 </div>
 
@@ -343,14 +351,14 @@ const EditNotePage = () => {
                         <div>
                             <div className="flex items-center justify-between mb-3">
                                 <label className="block text-sm font-medium text-gray-700">
-                                    🗺️ Геологический лог
+                                    🗺️ {t('notes.geologicalLog')}
                                 </label>
                                 <button
                                     type="button"
                                     onClick={() => setShowLogTool(!showLogTool)}
                                     className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
                                 >
-                                    {showLogTool ? '➖ Скрыть' : '➕ Открыть редактор'}
+                                    {showLogTool ? `➖ ${t('notes.hideEditor')}` : `➕ ${t('notes.openEditor')}`}
                                 </button>
                             </div>
                             
@@ -359,7 +367,7 @@ const EditNotePage = () => {
                                     <GeologicalLogTool
                                         onSave={(logData) => {
                                             setGeologicalLog(logData);
-                                            alert('Геологический лог сохранен и будет прикреплен к заметке');
+                                            alert(t('notes.logSaved'));
                                         }}
                                         initialData={geologicalLog}
                                     />
@@ -371,11 +379,11 @@ const EditNotePage = () => {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-purple-900">
-                                                ✅ Геологический лог создан
+                                                ✅ {t('notes.logCreated')}
                                             </p>
                                             <p className="text-xs text-purple-700 mt-1">
-                                                Скважина: {geologicalLog.wellName || 'Не указана'} | 
-                                                Слоев: {geologicalLog.layers?.length || 0}
+                                                {t('notes.wellName')}: {geologicalLog.wellName || t('notes.notSpecifiedWell')} | 
+                                                {' '}{t('notes.layersCount')}: {geologicalLog.layers?.length || 0}
                                             </p>
                                         </div>
                                         <button
@@ -383,7 +391,7 @@ const EditNotePage = () => {
                                             onClick={() => setShowLogTool(true)}
                                             className="text-purple-600 hover:text-purple-800 text-sm font-medium"
                                         >
-                                            Редактировать
+                                            {t('notes.editLog')}
                                         </button>
                                     </div>
                                 </div>
@@ -393,7 +401,7 @@ const EditNotePage = () => {
                         {/* File Upload Section */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-3">
-                                📎 Прикрепить файлы
+                                📎 {t('notes.attachFiles')}
                             </label>
                             
                             {/* File Drop Zone */}
@@ -414,10 +422,10 @@ const EditNotePage = () => {
                                         </svg>
                                         <div>
                                             <p className="text-base text-gray-600 font-medium">
-                                                {uploadingFiles ? 'Загрузка файлов...' : 'Нажмите или перетащите файлы сюда'}
+                                                {uploadingFiles ? t('notes.uploadingFiles') : t('notes.fileDropZone')}
                                             </p>
                                             <p className="text-sm text-gray-500 mt-1">
-                                                Поддержка: изображения, PDF, документы, геоданные (максимум 10MB)
+                                                {t('notes.fileDropHint')}
                                             </p>
                                         </div>
                                     </div>
@@ -428,22 +436,20 @@ const EditNotePage = () => {
                             {attachedFiles.length > 0 && (
                                 <div className="mt-4 space-y-3">
                                     <p className="text-sm font-medium text-gray-700">
-                                        Прикрепленные файлы ({attachedFiles.length}):
+                                        {t('notes.attachedFiles')} ({attachedFiles.length}):
                                     </p>
                                     {attachedFiles.map((file, index) => (
                                         <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
                                             <div className="flex items-center space-x-3">
                                                 <span className="text-2xl">
-                                                    {file.type.startsWith('image/') ? '🖼️' : 
-                                                     file.type.includes('pdf') ? '📄' : 
-                                                     file.name.endsWith('.kml') ? '🗺️' : '📎'}
+                                                    {getFileIcon(file)}
                                                 </span>
                                                 <div>
                                                     <p className="text-sm font-medium text-gray-800">
                                                         {file.name}
                                                     </p>
                                                     <p className="text-xs text-gray-500">
-                                                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                                                        {(file.size / 1024 / 1024).toFixed(2)} {t('notes.mb')}
                                                     </p>
                                                 </div>
                                             </div>
@@ -470,7 +476,7 @@ const EditNotePage = () => {
                             disabled={!formData.title.trim() || saving}
                             className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
                         >
-                            {saving ? 'Сохранение...' : 'Сохранить изменения'}
+                            {saving ? t('notes.saving') : t('save')}
                         </button>
                         <button
                             onClick={() => router.push(`/pages/projects/${projectId}/notes/${noteId}`)}

@@ -9,13 +9,13 @@ import Navbar from "@/app/components/navbar";
 import ParticipantSelector from "@/app/components/participantSelector";
 import { useStrings } from "@/app/hooks/useStrings";
 
-// ИСПРАВЛЕНИЕ: Добавляем функцию formatDate
-const formatDate = (dateString) => {
+// Функция для форматирования даты
+const formatDate = (dateString, t) => {
     if (!dateString) return '';
     
     try {
         const date = new Date(dateString);
-        if (isNaN(date.getTime())) return 'Некорректная дата';
+        if (isNaN(date.getTime())) return t('projects.invalidDate');
         
         return date.toLocaleDateString('ru-RU', {
             day: '2-digit',
@@ -24,12 +24,14 @@ const formatDate = (dateString) => {
         });
     } catch (error) {
         console.error('Error formatting date:', error);
-        return 'Ошибка даты';
+        return t('projects.dateError');
     }
 };
 
-// Обновленный компонент модального окна для создания проекта с ParticipantSelector
+// Компонент модального окна для создания проекта
 const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
+    const { t } = useStrings();
+    
     const [projectData, setProjectData] = useState({
         title: '',
         description: '',
@@ -121,7 +123,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-semibold">Создать новый проект</h2>
+                    <h2 className="text-xl font-semibold">{t('projects.createNewProject')}</h2>
                     <button
                         onClick={resetForm}
                         className="text-gray-400 hover:text-gray-600"
@@ -136,7 +138,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                     {/* Название проекта */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Название проекта *
+                            {t('projects.projectNameRequired')}
                         </label>
                         <input
                             type="text"
@@ -145,7 +147,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                             onChange={(e) => setProjectData(prev => ({ ...prev, title: e.target.value }))
                             }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Введите название проекта"
+                            placeholder={t('projects.enterProjectName')}
                             disabled={loading}
                         />
                     </div>
@@ -153,7 +155,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                     {/* Описание */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Описание
+                            {t('projects.description')}
                         </label>
                         <textarea
                             value={projectData.description}
@@ -161,7 +163,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                             }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             rows="3"
-                            placeholder="Описание проекта и его целей"
+                            placeholder={t('projects.projectDescription')}
                             disabled={loading}
                         />
                     </div>
@@ -170,7 +172,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                         {/* Дата начала */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Дата начала
+                                {t('projects.startDate')}
                             </label>
                             <input
                                 type="date"
@@ -185,7 +187,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                         {/* Дата окончания */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Дата окончания
+                                {t('projects.endDate')}
                             </label>
                             <input
                                 type="date"
@@ -202,7 +204,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                         {/* Приоритет */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Приоритет
+                                {t('projects.priority')}
                             </label>
                             <select
                                 value={projectData.priority}
@@ -211,17 +213,17 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 disabled={loading}
                             >
-                                <option value="low">🟢 Низкий</option>
-                                <option value="medium">🟡 Средний</option>
-                                <option value="high">🔴 Высокий</option>
-                                <option value="critical">🟣 Критический</option>
+                                <option value="low">{t('projects.lowPriority')}</option>
+                                <option value="medium">{t('projects.mediumPriority')}</option>
+                                <option value="high">{t('projects.highPriority')}</option>
+                                <option value="critical">{t('projects.criticalPriority')}</option>
                             </select>
                         </div>
 
                         {/* Категория */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Категория
+                                {t('projects.category')}
                             </label>
                             <input
                                 type="text"
@@ -229,7 +231,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                                 onChange={(e) => setProjectData(prev => ({ ...prev, category: e.target.value }))
                                 }
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Например: Разработка, Маркетинг"
+                                placeholder={t('projects.categoryPlaceholder')}
                                 disabled={loading}
                             />
                         </div>
@@ -238,7 +240,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                     {/* Бюджет */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Бюджет (необязательно)
+                            {t('projects.budget')}
                         </label>
                         <input
                             type="text"
@@ -246,19 +248,19 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                             onChange={(e) => setProjectData(prev => ({ ...prev, budget: e.target.value }))
                             }
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Например: 100,000 руб"
+                            placeholder={t('projects.budgetPlaceholder')}
                             disabled={loading}
                         />
                     </div>
 
-                    {/* НОВЫЙ: Участники проекта с ParticipantSelector */}
+                    {/* Участники проекта */}
                     <ParticipantSelector
                         users={users}
                         selectedParticipants={projectData.participants}
                         onParticipantsChange={handleParticipantsChange}
                         excludeUserIds={currentUser ? [currentUser.uid] : []}
-                        label="Участники проекта"
-                        placeholder="Поиск участников по имени, email или роли..."
+                        label={t('projects.projectParticipants')}
+                        placeholder={t('projects.searchParticipants')}
                         maxHeight="200px"
                         showSelectedCount={true}
                         allowMultiple={true}
@@ -266,7 +268,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                     />
 
                     <div className="text-xs text-gray-500">
-                        Создатель проекта автоматически становится участником
+                        {t('projects.creatorAutoAdded')}
                     </div>
 
                     {/* Кнопки */}
@@ -276,7 +278,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                             disabled={!projectData.title.trim() || loading}
                             className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
-                            {loading ? 'Создаем...' : 'Создать проект'}
+                            {loading ? t('projects.creating') : t('projects.createProject')}
                         </button>
                         <button
                             type="button"
@@ -284,7 +286,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
                             disabled={loading}
                             className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:opacity-50 transition-colors"
                         >
-                            Отмена
+                            {t('projects.cancel')}
                         </button>
                     </div>
                 </form>
@@ -295,6 +297,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, orgId }) => {
 
 const ProjectCard = ({ project, onProjectUpdate }) => {
     const router = useRouter();
+    const { t } = useStrings();
     const [isUpdating, setIsUpdating] = useState(false);
 
     const getPriorityColor = (priority) => {
@@ -304,6 +307,16 @@ const ProjectCard = ({ project, onProjectUpdate }) => {
             case 'medium': return 'bg-yellow-100 border-l-yellow-500';
             case 'low': return 'bg-green-100 border-l-green-500';
             default: return 'bg-gray-100 border-l-gray-500';
+        }
+    };
+
+    const getPriorityText = (priority) => {
+        switch (priority?.toLowerCase()) {
+            case 'critical': return t('projects.critical');
+            case 'high': return t('projects.high');
+            case 'medium': return t('projects.medium');
+            case 'low': return t('projects.low');
+            default: return priority;
         }
     };
 
@@ -343,9 +356,7 @@ const ProjectCard = ({ project, onProjectUpdate }) => {
                         project.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
                         'bg-green-100 text-green-800'
                     }`}>
-                        {project.priority === 'critical' ? 'Критический' :
-                         project.priority === 'high' ? 'Высокий' :
-                         project.priority === 'medium' ? 'Средний' : 'Низкий'}
+                        {getPriorityText(project.priority)}
                     </span>
                 )}
             </div>
@@ -355,7 +366,7 @@ const ProjectCard = ({ project, onProjectUpdate }) => {
             )}
 
             <div className="text-xs text-gray-500 mb-3">
-                {formatDate(project.startDate)} - {formatDate(project.endDate)}
+                {formatDate(project.startDate, t)} - {formatDate(project.endDate, t)}
             </div>
 
             {project.category && (
@@ -368,7 +379,7 @@ const ProjectCard = ({ project, onProjectUpdate }) => {
 
             {project.participants && project.participants.length > 0 && (
                 <div className="mb-3">
-                    <p className="text-xs text-gray-500 mb-1">Участники:</p>
+                    <p className="text-xs text-gray-500 mb-1">{t('projects.participants')}:</p>
                     <div className="flex -space-x-2">
                         {project.participants.slice(0, 3).map((participantId, index) => (
                             <div
@@ -393,7 +404,7 @@ const ProjectCard = ({ project, onProjectUpdate }) => {
                     onClick={() => router.push(`/pages/projects/${project.id}`)}
                     className="text-blue-600 text-xs hover:text-blue-800 transition-colors"
                 >
-                    Открыть проект
+                    {t('projects.openProject')}
                 </button>
                 
                 {isNotStarted ? (
@@ -402,7 +413,7 @@ const ProjectCard = ({ project, onProjectUpdate }) => {
                         disabled={isUpdating}
                         className="text-xs px-3 py-1 text-white bg-green-500 rounded hover:bg-green-600 disabled:opacity-50 transition-colors"
                     >
-                        {isUpdating ? '...' : 'Начать'}
+                        {isUpdating ? '...' : t('projects.start')}
                     </button>
                 ) : !isCompleted ? (
                     <button
@@ -410,11 +421,11 @@ const ProjectCard = ({ project, onProjectUpdate }) => {
                         disabled={isUpdating}
                         className="text-xs px-3 py-1 text-white bg-green-500 rounded hover:bg-green-600 disabled:opacity-50 transition-colors"
                     >
-                        {isUpdating ? '...' : 'Завершить'}
+                        {isUpdating ? '...' : t('projects.finish')}
                     </button>
                 ) : (
                     <span className="text-xs px-3 py-1 bg-green-100 text-green-800 rounded">
-                        Завершен
+                        {t('projects.completed')}
                     </span>
                 )}
             </div>
@@ -423,6 +434,8 @@ const ProjectCard = ({ project, onProjectUpdate }) => {
 };
 
 const KanbanColumn = ({ title, projects, count, onProjectUpdate }) => {
+    const { t } = useStrings();
+    
     return (
         <div className="flex-1 bg-gray-50 rounded-lg p-4">
             <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-200">
@@ -444,7 +457,7 @@ const KanbanColumn = ({ title, projects, count, onProjectUpdate }) => {
                 {projects.length === 0 && (
                     <div className="text-center text-gray-400 text-sm mt-12">
                         <div className="text-4xl mb-2">📋</div>
-                        <p>Нет проектов</p>
+                        <p>{t('projects.noProjects')}</p>
                     </div>
                 )}
             </div>
@@ -463,7 +476,6 @@ export default function Projects() {
     const [viewMode, setViewMode] = useState('kanban');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-    // Получение текущей организации пользователя
     const getCurrentUserOrg = async (userId) => {
         try {
             const organizationsSnapshot = await getDocs(collection(db, 'organizations'));
@@ -502,7 +514,6 @@ export default function Projects() {
                 };
             });
             
-            // Сортируем по дате создания (новые сначала)
             projectsList.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
             
             setProjects(projectsList);
@@ -517,7 +528,6 @@ export default function Projects() {
         try {
             const newProject = {
                 ...projectData,
-                // Автоматически добавляем создателя в участники
                 participants: projectData.participants.includes(currentUser.uid) 
                     ? projectData.participants 
                     : [...projectData.participants, currentUser.uid],
@@ -530,8 +540,6 @@ export default function Projects() {
             };
 
             await addDoc(collection(db, `organizations/${orgId}/projects`), newProject);
-            
-            // Обновляем список проектов
             await fetchProjects(orgId, currentUser.uid);
         } catch (error) {
             console.error('Error creating project:', error);
@@ -545,7 +553,6 @@ export default function Projects() {
         }
     };
 
-    // Группировка проектов
     const groupedProjects = {
         upcoming: projects.filter(p => p.status?.toLowerCase() === 'not started' || p.status?.toLowerCase() === 'upcoming'),
         'in progress': projects.filter(p => 
@@ -592,7 +599,7 @@ export default function Projects() {
                     <div className="p-8">
                         <div className="text-center">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                            <p className="mt-4 text-gray-600">Загрузка проектов...</p>
+                            <p className="mt-4 text-gray-600">{t('projects.loadingProjects')}</p>
                         </div>
                     </div>
                 </div>
@@ -608,7 +615,7 @@ export default function Projects() {
                 <div className="flex-1 p-6 overflow-auto">
                     <div className="mb-6">
                         <div className="flex justify-between items-center mb-6">
-                            <h1 className="text-3xl font-bold text-gray-900">Проекты</h1>
+                            <h1 className="text-3xl font-bold text-gray-900">{t('projects.title')}</h1>
                             
                             <div className="flex gap-3">
                                 <button
@@ -618,7 +625,7 @@ export default function Projects() {
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                                     </svg>
-                                    Новый проект
+                                    {t('projects.createNew')}
                                 </button>
 
                                 <div className="flex bg-gray-200 rounded-lg p-1">
@@ -630,7 +637,7 @@ export default function Projects() {
                                                 : 'text-gray-600 hover:text-gray-900'
                                         }`}
                                     >
-                                        Kanban
+                                        {t('projects.kanban')}
                                     </button>
                                     <button
                                         onClick={() => setViewMode('list')}
@@ -640,7 +647,7 @@ export default function Projects() {
                                                 : 'text-gray-600 hover:text-gray-900'
                                         }`}
                                     >
-                                        Список
+                                        {t('projects.list')}
                                     </button>
                                 </div>
                             </div>
@@ -657,7 +664,7 @@ export default function Projects() {
                                     </div>
                                     <div className="ml-4">
                                         <div className="text-2xl font-bold text-gray-900">{projectStats.total}</div>
-                                        <div className="text-sm text-gray-600">Всего проектов</div>
+                                        <div className="text-sm text-gray-600">{t('projects.totalProjects')}</div>
                                     </div>
                                 </div>
                             </div>
@@ -671,7 +678,7 @@ export default function Projects() {
                                     </div>
                                     <div className="ml-4">
                                         <div className="text-2xl font-bold text-gray-900">{projectStats.upcoming}</div>
-                                        <div className="text-sm text-gray-600">Предстоящих</div>
+                                        <div className="text-sm text-gray-600">{t('projects.upcomingProjects')}</div>
                                     </div>
                                 </div>
                             </div>
@@ -685,7 +692,7 @@ export default function Projects() {
                                     </div>
                                     <div className="ml-4">
                                         <div className="text-2xl font-bold text-gray-900">{projectStats.inProgress}</div>
-                                        <div className="text-sm text-gray-600">В процессе</div>
+                                        <div className="text-sm text-gray-600">{t('projects.inProgressProjects')}</div>
                                     </div>
                                 </div>
                             </div>
@@ -699,7 +706,7 @@ export default function Projects() {
                                     </div>
                                     <div className="ml-4">
                                         <div className="text-2xl font-bold text-gray-900">{projectStats.completed}</div>
-                                        <div className="text-sm text-gray-600">Завершенных</div>
+                                        <div className="text-sm text-gray-600">{t('projects.completedProjects')}</div>
                                     </div>
                                 </div>
                             </div>
@@ -709,13 +716,13 @@ export default function Projects() {
                     {projects.length === 0 ? (
                         <div className="text-center py-12">
                             <div className="text-6xl mb-4">📋</div>
-                            <h3 className="text-xl font-medium text-gray-900 mb-2">Пока нет проектов</h3>
-                            <p className="text-gray-600 mb-6">Создайте свой первый проект для начала работы</p>
+                            <h3 className="text-xl font-medium text-gray-900 mb-2">{t('projects.noProjectsYet')}</h3>
+                            <p className="text-gray-600 mb-6">{t('projects.createFirstProject')}</p>
                             <button
                                 onClick={() => setIsCreateModalOpen(true)}
                                 className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
                             >
-                                Создать первый проект
+                                {t('projects.createFirstProjectBtn')}
                             </button>
                         </div>
                     ) : (
@@ -724,21 +731,21 @@ export default function Projects() {
                             {viewMode === 'kanban' && (
                                 <div className="grid grid-cols-3 gap-6">
                                     <KanbanColumn
-                                        title="Предстоящие"
+                                        title={t('projects.upcoming')}
                                         projects={groupedProjects.upcoming}
                                         count={projectStats.upcoming}
                                         onProjectUpdate={handleProjectUpdate}
                                     />
                                     
                                     <KanbanColumn
-                                        title="В процессе"
+                                        title={t('projects.inProgress')}
                                         projects={groupedProjects['in progress']}
                                         count={projectStats.inProgress}
                                         onProjectUpdate={handleProjectUpdate}
                                     />
                                     
                                     <KanbanColumn
-                                        title="Завершенные"
+                                        title={t('projects.completedColumn')}
                                         projects={groupedProjects.completed}
                                         count={projectStats.completed}
                                         onProjectUpdate={handleProjectUpdate}
@@ -762,25 +769,25 @@ export default function Projects() {
                                                                 project.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
                                                                 'bg-green-100 text-green-800'
                                                             }`}>
-                                                                {project.priority === 'critical' ? 'Критический' :
-                                                                 project.priority === 'high' ? 'Высокий' :
-                                                                 project.priority === 'medium' ? 'Средний' : 'Низкий'}
+                                                                {project.priority === 'critical' ? t('projects.critical') :
+                                                                 project.priority === 'high' ? t('projects.high') :
+                                                                 project.priority === 'medium' ? t('projects.medium') : t('projects.low')}
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <p className="text-gray-600 mb-3">{project.description || 'Описание не указано'}</p>
+                                                    <p className="text-gray-600 mb-3">{project.description || t('projects.noDescriptionProvided')}</p>
                                                     <div className="flex items-center gap-4 text-sm text-gray-500">
-                                                        <span>Статус: <strong>{project.status}</strong></span>
-                                                        <span>Создан: {formatDate(project.createdAt)}</span>
-                                                        {project.startDate && <span>Начало: {formatDate(project.startDate)}</span>}
-                                                        {project.endDate && <span>Конец: {formatDate(project.endDate)}</span>}
+                                                        <span>{t('projects.statusLabel')}: <strong>{project.status}</strong></span>
+                                                        <span>{t('projects.createdDate')}: {formatDate(project.createdAt, t)}</span>
+                                                        {project.startDate && <span>{t('projects.startDateLabel')}: {formatDate(project.startDate, t)}</span>}
+                                                        {project.endDate && <span>{t('projects.endDateLabel')}: {formatDate(project.endDate, t)}</span>}
                                                     </div>
                                                 </div>
                                                 <button 
                                                     onClick={() => router.push(`/pages/projects/${project.id}`)}
                                                     className="text-blue-600 hover:text-blue-800 font-medium"
                                                 >
-                                                    Открыть →
+                                                    {t('projects.open')}
                                                 </button>
                                             </div>
                                         </div>

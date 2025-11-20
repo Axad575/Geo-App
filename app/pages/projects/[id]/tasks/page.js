@@ -6,44 +6,47 @@ import { app, db } from '@/app/api/firebase';
 import { doc, getDoc, updateDoc, arrayUnion, getDocs, collection } from 'firebase/firestore';
 import Sidebar from '@/app/components/sidebar';
 import Navbar from '@/app/components/navbar';
-// ИСПРАВЛЕНИЕ: правильный импорт с заглавной буквы
 import ParticipantSelector from '@/app/components/participantSelector';
 import { useStrings } from "@/app/hooks/useStrings";
 
-// Создадим также функцию formatDate для устранения ошибки
-const formatDate = (dateString) => {
-    if (!dateString) return 'Не указано';
+// Функция для получения текущей локали
+const getCurrentLocale = () => {
+    if (typeof window === 'undefined') return 'ru-RU';
+    
+    const currentLanguage = localStorage.getItem('language') || 'ru';
+    const localeMap = {
+        'ru': 'ru-RU',
+        'en': 'en-US',
+        'uz': 'uz-UZ'
+    };
+    
+    return localeMap[currentLanguage] || 'ru-RU';
+};
+
+// Функция для форматирования даты
+const formatDate = (dateString, t) => {
+    if (!dateString) return t('tasks.notSpecified');
     
     try {
         const date = new Date(dateString);
-        if (isNaN(date.getTime())) return 'Некорректная дата';
+        if (isNaN(date.getTime())) return t('tasks.invalidDate');
         
-        return date.toLocaleDateString('ru-RU', {
+        const selectedLocale = getCurrentLocale();
+        
+        return date.toLocaleDateString(selectedLocale, {
             day: '2-digit',
             month: 'short',
             year: 'numeric'
         });
     } catch (error) {
         console.error('Error formatting date:', error);
-        return 'Ошибка даты';
+        return t('tasks.dateError');
     }
-};
-
-// Добавим функцию displayDate или заменим вызовы на formatDate
-const displayDate = (dateString, label = '') => {
-    if (!dateString) return null;
-    
-    const formattedDate = formatDate(dateString);
-    return (
-        <div className="flex flex-col items-center">
-            {label && <span className="text-xs text-gray-500">{label}</span>}
-            <span className="text-sm">{formattedDate}</span>
-        </div>
-    );
 };
 
 // Компонент Task Card для Timeline
 const TaskCard = ({ task, users, onTaskUpdate, isSelected, onSelect }) => {
+    const { t } = useStrings();
     const [isExpanded, setIsExpanded] = useState(false);
 
     const getPriorityColor = (priority) => {
@@ -62,6 +65,25 @@ const TaskCard = ({ task, users, onTaskUpdate, isSelected, onSelect }) => {
             case 'in progress': return 'bg-blue-100 text-blue-800';
             case 'not started': return 'bg-gray-100 text-gray-800';
             default: return 'bg-gray-100 text-gray-800';
+        }
+    };
+
+    const getStatusText = (status) => {
+        switch (status?.toLowerCase()) {
+            case 'completed': return t('tasks.completed');
+            case 'in progress': return t('tasks.inProgress');
+            case 'not started': return t('tasks.notStarted');
+            default: return status;
+        }
+    };
+
+    const getPriorityText = (priority) => {
+        switch (priority?.toLowerCase()) {
+            case 'low': return t('tasks.low');
+            case 'medium': return t('tasks.medium');
+            case 'high': return t('tasks.high');
+            case 'critical': return t('tasks.critical');
+            default: return t('tasks.medium');
         }
     };
 
@@ -103,20 +125,16 @@ const TaskCard = ({ task, users, onTaskUpdate, isSelected, onSelect }) => {
                 <div className="flex items-center gap-3">
                     {/* Status */}
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}>
-                        {task.status === 'completed' ? 'Завершена' :
-                         task.status === 'in progress' ? 'В процессе' : 'Не начата'}
+                        {getStatusText(task.status)}
                     </span>
 
                     {/* Priority */}
                     <span className="text-xs text-gray-500">
-                        {task.priority === 'low' ? '🟢 Низкий' :
-                         task.priority === 'medium' ? '🟡 Средний' :
-                         task.priority === 'high' ? '🔴 Высокий' :
-                         task.priority === 'critical' ? '🟣 Критический' : '🟡 Средний'}
+                        {getPriorityText(task.priority)}
                     </span>
                 </div>
 
-                {/* Assignee - улучшенное отображение */}
+                {/* Assignee */}
                 {task.assignee && (
                     <div className="flex items-center gap-2">
                         <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
@@ -132,12 +150,8 @@ const TaskCard = ({ task, users, onTaskUpdate, isSelected, onSelect }) => {
             {/* Due Date */}
             {task.dueDate && (
                 <div className={`mt-2 text-xs ${isOverdue ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
-                    📅 {new Date(task.dueDate).toLocaleDateString('ru-RU', { 
-                        day: '2-digit', 
-                        month: 'short',
-                        year: 'numeric'
-                    })}
-                    {isOverdue && ' (просрочено)'}
+                    📅 {formatDate(task.dueDate, t)}
+                    {isOverdue && ` (${t('tasks.overdue')})`}
                 </div>
             )}
 
@@ -147,7 +161,7 @@ const TaskCard = ({ task, users, onTaskUpdate, isSelected, onSelect }) => {
                     {/* Full Description */}
                     {task.description && (
                         <div>
-                            <label className="text-xs font-medium text-gray-700">Описание</label>
+                            <label className="text-xs font-medium text-gray-700">{t('tasks.description')}</label>
                             <p className="text-sm text-gray-600 mt-1">{task.description}</p>
                         </div>
                     )}
@@ -155,7 +169,7 @@ const TaskCard = ({ task, users, onTaskUpdate, isSelected, onSelect }) => {
                     {/* Assignee Info */}
                     {task.assignee && (
                         <div>
-                            <label className="text-xs font-medium text-gray-700">Исполнитель</label>
+                            <label className="text-xs font-medium text-gray-700">{t('tasks.executor')}</label>
                             <div className="flex items-center gap-2 mt-1">
                                 <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
                                     {(users[task.assignee] || task.assignee).charAt(0).toUpperCase()}
@@ -179,7 +193,7 @@ const TaskCard = ({ task, users, onTaskUpdate, isSelected, onSelect }) => {
                                         }}
                                         className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
                                     >
-                                        Начать
+                                        {t('tasks.startTask')}
                                     </button>
                                 )}
                                 <button
@@ -189,7 +203,7 @@ const TaskCard = ({ task, users, onTaskUpdate, isSelected, onSelect }) => {
                                     }}
                                     className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
                                 >
-                                    Завершить
+                                    {t('tasks.finishTask')}
                                 </button>
                             </>
                         )}
@@ -198,10 +212,10 @@ const TaskCard = ({ task, users, onTaskUpdate, isSelected, onSelect }) => {
                     {/* Metadata */}
                     <div className="text-xs text-gray-500 space-y-1">
                         {task.createdAt && (
-                            <div>Создано: {new Date(task.createdAt).toLocaleDateString('ru-RU')}</div>
+                            <div>{t('tasks.created')}: {formatDate(task.createdAt, t)}</div>
                         )}
                         {task.updatedAt && (
-                            <div>Обновлено: {new Date(task.updatedAt).toLocaleDateString('ru-RU')}</div>
+                            <div>{t('tasks.updated')}: {formatDate(task.updatedAt, t)}</div>
                         )}
                     </div>
                 </div>
@@ -212,6 +226,8 @@ const TaskCard = ({ task, users, onTaskUpdate, isSelected, onSelect }) => {
 
 // Компонент Timeline
 const Timeline = ({ tasks, users, onTaskUpdate, selectedTask, onTaskSelect, currentFilter, sortBy }) => {
+    const { t } = useStrings();
+    
     // Сортировка и фильтрация задач
     const getFilteredAndSortedTasks = () => {
         let filteredTasks = [...tasks];
@@ -255,8 +271,8 @@ const Timeline = ({ tasks, users, onTaskUpdate, selectedTask, onTaskSelect, curr
 
         sortedTasks.forEach(task => {
             if (!task.dueDate) {
-                if (!groups['Без срока']) groups['Без срока'] = [];
-                groups['Без срока'].push(task);
+                if (!groups[t('tasks.noDeadline')]) groups[t('tasks.noDeadline')] = [];
+                groups[t('tasks.noDeadline')].push(task);
                 return;
             }
 
@@ -264,15 +280,17 @@ const Timeline = ({ tasks, users, onTaskUpdate, selectedTask, onTaskSelect, curr
             let groupKey;
 
             if (dueDate.toDateString() === today.toDateString()) {
-                groupKey = 'Сегодня';
+                groupKey = t('tasks.today');
             } else if (dueDate.toDateString() === tomorrow.toDateString()) {
-                groupKey = 'Завтра';
+                groupKey = t('tasks.tomorrow');
             } else if (dueDate.toDateString() === yesterday.toDateString()) {
-                groupKey = 'Вчера';
+                groupKey = t('tasks.yesterday');
             } else if (dueDate < today) {
-                groupKey = 'Просрочено';
+                groupKey = t('tasks.overdueTasks');
             } else {
-                groupKey = dueDate.toLocaleDateString('ru-RU', { 
+                const selectedLocale = getCurrentLocale();
+                
+                groupKey = dueDate.toLocaleDateString(selectedLocale, { 
                     day: '2-digit', 
                     month: 'long',
                     year: dueDate.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
@@ -290,9 +308,9 @@ const Timeline = ({ tasks, users, onTaskUpdate, selectedTask, onTaskSelect, curr
 
     // Определяем цвет для группы
     const getGroupColor = (groupName) => {
-        if (groupName === 'Просрочено') return 'text-red-600 border-red-200 bg-red-50';
-        if (groupName === 'Сегодня') return 'text-blue-600 border-blue-200 bg-blue-50';
-        if (groupName === 'Завтра') return 'text-green-600 border-green-200 bg-green-50';
+        if (groupName === t('tasks.overdueTasks')) return 'text-red-600 border-red-200 bg-red-50';
+        if (groupName === t('tasks.today')) return 'text-blue-600 border-blue-200 bg-blue-50';
+        if (groupName === t('tasks.tomorrow')) return 'text-green-600 border-green-200 bg-green-50';
         return 'text-gray-600 border-gray-200 bg-gray-50';
     };
 
@@ -300,8 +318,8 @@ const Timeline = ({ tasks, users, onTaskUpdate, selectedTask, onTaskSelect, curr
         return (
             <div className="flex flex-col items-center justify-center h-64 text-gray-500">
                 <div className="text-6xl mb-4">📋</div>
-                <h3 className="text-lg font-medium mb-2">Задач не найдено</h3>
-                <p className="text-sm">Создайте новую задачу или измените фильтры</p>
+                <h3 className="text-lg font-medium mb-2">{t('tasks.noTasksFound')}</h3>
+                <p className="text-sm">{t('tasks.createNewTask')}</p>
             </div>
         );
     }
@@ -327,7 +345,7 @@ const Timeline = ({ tasks, users, onTaskUpdate, selectedTask, onTaskSelect, curr
 
                     {/* Task Cards */}
                     <div className="ml-12 mt-4 space-y-4">
-                        {groupTasks.map((task, index) => (
+                        {groupTasks.map((task) => (
                             <div key={task.id} className="relative">
                                 {/* Timeline Dot */}
                                 <div className={`absolute -left-8 top-4 w-3 h-3 rounded-full border-2 bg-white ${
@@ -355,25 +373,27 @@ const Timeline = ({ tasks, users, onTaskUpdate, selectedTask, onTaskSelect, curr
 
 // Компонент Filters and Controls
 const TaskControls = ({ currentFilter, onFilterChange, sortBy, onSortChange, taskStats }) => {
+    const { t } = useStrings();
+    
     return (
         <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
             <div className="flex items-center justify-between mb-4">
-                <h3 className="font-medium text-gray-900">Фильтры и сортировка</h3>
+                <h3 className="font-medium text-gray-900">{t('tasks.filtersAndSort')}</h3>
                 
                 {/* Stats */}
                 <div className="flex items-center gap-4 text-sm">
                     <span className="px-2 py-1 bg-gray-100 rounded-full">
-                        Всего: {taskStats.total}
+                        {t('tasks.total')}: {taskStats.total}
                     </span>
                     <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
-                        В процессе: {taskStats.inProgress}
+                        {t('tasks.inProgressCount')}: {taskStats.inProgress}
                     </span>
                     <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full">
-                        Завершено: {taskStats.completed}
+                        {t('tasks.completedCount')}: {taskStats.completed}
                     </span>
                     {taskStats.overdue > 0 && (
                         <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full">
-                            Просрочено: {taskStats.overdue}
+                            {t('tasks.overdueCount')}: {taskStats.overdue}
                         </span>
                     )}
                 </div>
@@ -382,30 +402,30 @@ const TaskControls = ({ currentFilter, onFilterChange, sortBy, onSortChange, tas
             <div className="flex items-center gap-4">
                 {/* Status Filter */}
                 <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium text-gray-700">Статус:</label>
+                    <label className="text-sm font-medium text-gray-700">{t('tasks.status')}:</label>
                     <select
                         value={currentFilter}
                         onChange={(e) => onFilterChange(e.target.value)}
                         className="text-sm border border-gray-300 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                        <option value="all">Все задачи</option>
-                        <option value="not started">Не начатые</option>
-                        <option value="in progress">В процессе</option>
-                        <option value="completed">Завершенные</option>
+                        <option value="all">{t('tasks.allTasks')}</option>
+                        <option value="not started">{t('tasks.notStartedTasks')}</option>
+                        <option value="in progress">{t('tasks.inProgressTasks')}</option>
+                        <option value="completed">{t('tasks.completedTasks')}</option>
                     </select>
                 </div>
 
                 {/* Sort */}
                 <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium text-gray-700">Сортировка:</label>
+                    <label className="text-sm font-medium text-gray-700">{t('tasks.sorting')}:</label>
                     <select
                         value={sortBy}
                         onChange={(e) => onSortChange(e.target.value)}
                         className="text-sm border border-gray-300 rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                        <option value="dueDate">По сроку выполнения</option>
-                        <option value="priority">По приоритету</option>
-                        <option value="createdAt">По дате создания</option>
+                        <option value="dueDate">{t('tasks.byDueDate')}</option>
+                        <option value="priority">{t('tasks.byPriority')}</option>
+                        <option value="createdAt">{t('tasks.byCreatedDate')}</option>
                     </select>
                 </div>
             </div>
@@ -413,8 +433,10 @@ const TaskControls = ({ currentFilter, onFilterChange, sortBy, onSortChange, tas
     );
 };
 
-// Обновленный компонент Add Task Modal с ParticipantSelector
+// Компонент Add Task Modal
 const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
+    const { t } = useStrings();
+    
     const [newTask, setNewTask] = useState({
         title: '',
         description: '',
@@ -432,7 +454,7 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
         id,
         name: name || id,
         email: id,
-        role: 'member' // Базовая роль для совместимости
+        role: 'member'
     }));
 
     // Фильтруем только участников проекта
@@ -441,7 +463,6 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
     );
 
     const handleAssigneeChange = (selectedUsers) => {
-        // Для исполнителя берем только первого выбранного пользователя
         setNewTask(prev => ({
             ...prev,
             assignee: selectedUsers.length > 0 ? selectedUsers[0] : ''
@@ -493,7 +514,7 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">Новая задача</h3>
+                    <h3 className="text-lg font-semibold">{t('tasks.createTask')}</h3>
                     <button
                         onClick={resetForm}
                         className="text-gray-400 hover:text-gray-600"
@@ -508,14 +529,14 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
                     {/* Title */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Название задачи *
+                            {t('tasks.taskTitleRequired')}
                         </label>
                         <input
                             type="text"
                             value={newTask.title}
                             onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
                             className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Введите название задачи"
+                            placeholder={t('tasks.enterTaskTitle')}
                             required
                             disabled={loading}
                         />
@@ -524,28 +545,28 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
                     {/* Description */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Описание
+                            {t('tasks.taskDescription')}
                         </label>
                         <textarea
                             value={newTask.description}
                             onChange={(e) => setNewTask(prev => ({ ...prev, description: e.target.value }))}
                             className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             rows="3"
-                            placeholder="Описание задачи"
+                            placeholder={t('tasks.taskDescriptionPlaceholder')}
                             disabled={loading}
                         />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Assignee with ParticipantSelector */}
+                        {/* Assignee */}
                         <div>
                             <ParticipantSelector
                                 users={projectParticipants}
                                 selectedParticipants={newTask.assignee ? [newTask.assignee] : []}
                                 onParticipantsChange={handleAssigneeChange}
                                 allowMultiple={false}
-                                label="Исполнитель"
-                                placeholder="Поиск исполнителя..."
+                                label={t('tasks.selectAssignee')}
+                                placeholder={t('tasks.searchAssignee')}
                                 maxHeight="150px"
                                 showSelectedCount={false}
                                 className="w-full"
@@ -553,7 +574,7 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
                             
                             {projectParticipants.length === 0 && (
                                 <div className="text-xs text-gray-500 mt-1">
-                                    В проекте нет участников для назначения
+                                    {t('tasks.noParticipants')}
                                 </div>
                             )}
                         </div>
@@ -561,7 +582,7 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
                         {/* Priority */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Приоритет
+                                {t('tasks.priority')}
                             </label>
                             <select
                                 value={newTask.priority}
@@ -569,10 +590,10 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
                                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 disabled={loading}
                             >
-                                <option value="low">🟢 Низкий</option>
-                                <option value="medium">🟡 Средний</option>
-                                <option value="high">🔴 Высокий</option>
-                                <option value="critical">🟣 Критический</option>
+                                <option value="low">{t('tasks.lowPriority')}</option>
+                                <option value="medium">{t('tasks.mediumPriority')}</option>
+                                <option value="high">{t('tasks.highPriority')}</option>
+                                <option value="critical">{t('tasks.criticalPriority')}</option>
                             </select>
                         </div>
                     </div>
@@ -581,7 +602,7 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
                         {/* Start Date */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Дата начала
+                                {t('tasks.startDate')}
                             </label>
                             <input
                                 type="date"
@@ -595,7 +616,7 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
                         {/* Due Date */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Срок выполнения
+                                {t('tasks.dueDate')}
                             </label>
                             <input
                                 type="date"
@@ -610,7 +631,7 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
                     {/* Status */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Статус
+                            {t('tasks.taskStatus')}
                         </label>
                         <select
                             value={newTask.status}
@@ -618,16 +639,16 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
                             className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             disabled={loading}
                         >
-                            <option value="not started">Не начата</option>
-                            <option value="in progress">В процессе</option>
-                            <option value="completed">Завершена</option>
+                            <option value="not started">{t('tasks.notStarted')}</option>
+                            <option value="in progress">{t('tasks.inProgress')}</option>
+                            <option value="completed">{t('tasks.completed')}</option>
                         </select>
                     </div>
 
                     {/* Location */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Связанная локация
+                            {t('tasks.relatedLocation')}
                         </label>
                         <select
                             value={newTask.locationId}
@@ -635,7 +656,7 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
                             className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             disabled={loading}
                         >
-                            <option value="">Без локации</option>
+                            <option value="">{t('tasks.noLocation')}</option>
                             {project?.locations?.map((location) => (
                                 <option key={location.id} value={location.id}>
                                     📍 {location.name}
@@ -654,10 +675,10 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
                                     </div>
                                     <div>
                                         <div className="text-sm font-medium text-blue-900">
-                                            Исполнитель: {users[newTask.assignee] || newTask.assignee}
+                                            {t('tasks.assignedTo')}: {users[newTask.assignee] || newTask.assignee}
                                         </div>
                                         <div className="text-xs text-blue-600">
-                                            Задача будет назначена этому пользователю
+                                            {t('tasks.taskWillBeAssigned')}
                                         </div>
                                     </div>
                                 </div>
@@ -681,7 +702,7 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
                             disabled={!newTask.title.trim() || loading}
                             className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
-                            {loading ? 'Создается...' : 'Создать задачу'}
+                            {loading ? t('tasks.creating') : t('tasks.createButton')}
                         </button>
                         <button
                             type="button"
@@ -689,7 +710,7 @@ const AddTaskModal = ({ isOpen, onClose, onAdd, users, project }) => {
                             disabled={loading}
                             className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:opacity-50 transition-colors"
                         >
-                            Отмена
+                            {t('tasks.cancel')}
                         </button>
                     </div>
                 </form>
@@ -715,35 +736,6 @@ export default function ProjectTasks() {
     const [selectedTask, setSelectedTask] = useState(null);
     const [currentFilter, setCurrentFilter] = useState('all');
     const [sortBy, setSortBy] = useState('dueDate');
-
-    // Диапазон дат для диаграммы Ганта
-    const getDateRange = () => {
-        if (tasks.length === 0) {
-            const today = new Date();
-            const start = new Date(today.getFullYear(), today.getMonth(), 1);
-            const end = new Date(today.getFullYear(), today.getMonth() + 3, 0);
-            return { start, end };
-        }
-
-        const dates = tasks.filter(task => task.dueDate).map(task => new Date(task.dueDate));
-        if (dates.length === 0) {
-            const today = new Date();
-            const start = new Date(today.getFullYear(), today.getMonth(), 1);
-            const end = new Date(today.getFullYear(), today.getMonth() + 3, 0);
-            return { start, end };
-        }
-
-        const minDate = new Date(Math.min(...dates));
-        const maxDate = new Date(Math.max(...dates));
-        
-        // Добавляем отступы
-        const start = new Date(minDate.getFullYear(), minDate.getMonth() - 1, 1);
-        const end = new Date(maxDate.getFullYear(), maxDate.getMonth() + 2, 0);
-        
-        return { start, end };
-    };
-
-    const dateRange = getDateRange();
 
     // Получение пользователя и организации
     const getCurrentUserOrg = async (userId) => {
@@ -862,7 +854,7 @@ export default function ProjectTasks() {
                 <div className="flex-1">
                     <Navbar orgId={orgId} />
                     <div className="p-8">
-                        <div className="text-center">Загрузка...</div>
+                        <div className="text-center">{t('tasks.loading')}</div>
                     </div>
                 </div>
             </div>
@@ -889,7 +881,7 @@ export default function ProjectTasks() {
                     {/* Header */}
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-4">
-                            <h1 className="text-2xl font-bold">Timeline задач</h1>
+                            <h1 className="text-2xl font-bold">{t('tasks.timeline')}</h1>
                             <div className="text-sm text-gray-600">
                                 {project?.title}
                             </div>
@@ -900,13 +892,13 @@ export default function ProjectTasks() {
                                 onClick={() => setShowAddTask(true)}
                                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                             >
-                                + Новая задача
+                                + {t('tasks.newTask')}
                             </button>
                             <button
                                 onClick={() => router.push(`/pages/projects/${projectId}`)}
                                 className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
                             >
-                                ← Назад к проекту
+                                ← {t('tasks.backToProject')}
                             </button>
                         </div>
                     </div>
@@ -922,20 +914,20 @@ export default function ProjectTasks() {
                                 <div className="flex gap-4 text-sm text-gray-600">
                                     {project.createdAt && (
                                         <div className="flex flex-col items-center">
-                                            <span className="text-xs text-gray-500">Создан</span>
-                                            <span className="text-sm">{formatDate(project.createdAt)}</span>
+                                            <span className="text-xs text-gray-500">{t('tasks.projectCreated')}</span>
+                                            <span className="text-sm">{formatDate(project.createdAt, t)}</span>
                                         </div>
                                     )}
                                     {project.startDate && (
                                         <div className="flex flex-col items-center">
-                                            <span className="text-xs text-gray-500">Начало</span>
-                                            <span className="text-sm">{formatDate(project.startDate)}</span>
+                                            <span className="text-xs text-gray-500">{t('tasks.projectStart')}</span>
+                                            <span className="text-sm">{formatDate(project.startDate, t)}</span>
                                         </div>
                                     )}
                                     {project.endDate && (
                                         <div className="flex flex-col items-center">
-                                            <span className="text-xs text-gray-500">Конец</span>
-                                            <span className="text-sm">{formatDate(project.endDate)}</span>
+                                            <span className="text-xs text-gray-500">{t('tasks.projectEnd')}</span>
+                                            <span className="text-sm">{formatDate(project.endDate, t)}</span>
                                         </div>
                                     )}
                                 </div>

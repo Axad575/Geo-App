@@ -9,7 +9,7 @@ import { useStrings } from "@/app/hooks/useStrings";
 import InteractiveMap from '@/app/components/InteractiveMap';
 
 const ViewNotePage = () => {
-    const { t, language } = useStrings();
+    const { t } = useStrings();
     const router = useRouter();
     const params = useParams();
     const auth = getAuth(app);
@@ -24,13 +24,17 @@ const ViewNotePage = () => {
     const [deleting, setDeleting] = useState(false);
 
     // Получаем локаль для форматирования даты
-    const getLocale = () => {
-        switch (language) {
-            case 'ru': return 'ru-RU';
-            case 'en': return 'en-GB';
-            case 'uz': return 'uz-UZ';
-            default: return 'en-GB';
-        }
+    const getCurrentLocale = () => {
+        if (typeof window === 'undefined') return 'ru-RU';
+        
+        const currentLanguage = localStorage.getItem('language') || 'ru';
+        const localeMap = {
+            'ru': 'ru-RU',
+            'en': 'en-US',
+            'uz': 'uz-UZ'
+        };
+        
+        return localeMap[currentLanguage] || 'ru-RU';
     };
 
     // Получение организации пользователя
@@ -113,7 +117,8 @@ const ViewNotePage = () => {
     const formatDate = (date) => {
         if (!date) return '';
         try {
-            return new Date(date).toLocaleDateString(getLocale(), {
+            const selectedLocale = getCurrentLocale();
+            return new Date(date).toLocaleDateString(selectedLocale, {
                 day: '2-digit',
                 month: '2-digit',
                 year: 'numeric',
@@ -182,7 +187,7 @@ const ViewNotePage = () => {
 
     // Функция удаления заметки
     const handleDeleteNote = async () => {
-        if (!window.confirm('Вы уверены, что хотите удалить эту заметку? Это действие нельзя отменить.')) {
+        if (!window.confirm(t('notes.confirmDelete'))) {
             return;
         }
 
@@ -215,9 +220,17 @@ const ViewNotePage = () => {
             router.push(`/pages/projects/${projectId}`);
         } catch (error) {
             console.error('Error deleting note:', error);
-            alert('Ошибка при удалении заметки. Пожалуйста, попробуйте снова.');
+            alert(t('notes.deleteError'));
             setDeleting(false);
         }
+    };
+
+    // Функция для получения иконки файла
+    const getFileIcon = (file) => {
+        if (file.type?.startsWith('image/')) return '🖼️';
+        if (file.type?.includes('pdf')) return '📄';
+        if (file.name?.endsWith('.kml') || file.name?.endsWith('.gpx')) return '🗺️';
+        return '📎';
     };
 
     if (loading || !note || !project) {
@@ -240,12 +253,12 @@ const ViewNotePage = () => {
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
                         </svg>
-                        Назад к проекту
+                        {t('notes.backToProject')}
                     </button>
                     <div className="flex items-start justify-between">
                         <div>
                             <h1 className="text-3xl font-bold mb-2">{note.title}</h1>
-                            <p className="text-gray-600">Проект: {project.title}</p>
+                            <p className="text-gray-600">{t('notes.project')}: {project.title}</p>
                         </div>
                     </div>
                 </div>
@@ -255,10 +268,10 @@ const ViewNotePage = () => {
                     <div className="lg:col-span-2 space-y-6">
                         {/* Описание */}
                         <div className="bg-white rounded-lg shadow p-6">
-                            <h2 className="text-xl font-semibold mb-4">Описание</h2>
+                            <h2 className="text-xl font-semibold mb-4">{t('notes.description')}</h2>
                             <div className="prose max-w-none">
                                 <p className="text-gray-700 whitespace-pre-wrap">
-                                    {note.description || 'Описание отсутствует'}
+                                    {note.description || t('notes.noDescription')}
                                 </p>
                             </div>
                         </div>
@@ -267,24 +280,21 @@ const ViewNotePage = () => {
                         {note.attachments && note.attachments.length > 0 && (
                             <div className="bg-white rounded-lg shadow p-6">
                                 <h2 className="text-xl font-semibold mb-4">
-                                    📎 Прикрепленные файлы ({note.attachments.length})
+                                    📎 {t('notes.attachedFiles')} ({note.attachments.length})
                                 </h2>
                                 <div className="space-y-3">
                                     {note.attachments.map((file, index) => (
                                         <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
                                             <div className="flex items-center space-x-3">
                                                 <span className="text-3xl">
-                                                    {file.type.startsWith('image/') ? '🖼️' : 
-                                                     file.type.includes('pdf') ? '📄' : 
-                                                     file.name.endsWith('.kml') ? '🗺️' : 
-                                                     file.name.endsWith('.gpx') ? '🗺️' : '📎'}
+                                                    {getFileIcon(file)}
                                                 </span>
                                                 <div>
                                                     <p className="font-medium text-gray-800">
                                                         {file.name}
                                                     </p>
                                                     <p className="text-sm text-gray-500">
-                                                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                                                        {(file.size / 1024 / 1024).toFixed(2)} {t('notes.mb')}
                                                     </p>
                                                 </div>
                                             </div>
@@ -294,7 +304,7 @@ const ViewNotePage = () => {
                                                 rel="noopener noreferrer"
                                                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                                             >
-                                                Открыть
+                                                {t('notes.openFile')}
                                             </a>
                                         </div>
                                     ))}
@@ -305,17 +315,17 @@ const ViewNotePage = () => {
                         {/* Карта с локацией */}
                         {note.location && (
                             <div className="bg-white rounded-lg shadow p-6">
-                                <h2 className="text-xl font-semibold mb-4">📍 Местоположение</h2>
+                                <h2 className="text-xl font-semibold mb-4">📍 {t('notes.location')}</h2>
                                 <div className="mb-4">
                                     <h3 className="font-semibold text-lg text-gray-800">{note.location.name}</h3>
                                     {note.location.latitude && note.location.longitude && (
                                         <div className="mt-2 text-sm text-gray-600 space-y-1">
                                             <p>
-                                                <span className="font-medium">Десятичные координаты:</span>{' '}
+                                                <span className="font-medium">{t('notes.decimalCoordinates')}:</span>{' '}
                                                 {Number(note.location.latitude).toFixed(6)}, {Number(note.location.longitude).toFixed(6)}
                                             </p>
                                             <p>
-                                                <span className="font-medium">Градусы/минуты/секунды:</span>{' '}
+                                                <span className="font-medium">{t('notes.dmsCoordinates')}:</span>{' '}
                                                 {decimalToDMS(Number(note.location.latitude), true)}, {decimalToDMS(Number(note.location.longitude), false)}
                                             </p>
                                         </div>
@@ -338,33 +348,33 @@ const ViewNotePage = () => {
                         {note.geologicalLog && (
                             <div className="bg-white rounded-lg shadow p-6">
                                 <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                                    🗺️ Геологический лог
+                                    🗺️ {t('notes.geologicalLog')}
                                 </h3>
                                 <div className="space-y-4">
                                     {/* Общая информация */}
                                     <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
                                         {note.geologicalLog.wellName && (
                                             <div>
-                                                <p className="text-xs text-gray-500 mb-1">Скважина</p>
+                                                <p className="text-xs text-gray-500 mb-1">{t('notes.well')}</p>
                                                 <p className="font-medium">{note.geologicalLog.wellName}</p>
                                             </div>
                                         )}
                                         {note.geologicalLog.location && (
                                             <div>
-                                                <p className="text-xs text-gray-500 mb-1">Локация</p>
+                                                <p className="text-xs text-gray-500 mb-1">{t('notes.locationLabel')}</p>
                                                 <p className="font-medium">{note.geologicalLog.location}</p>
                                             </div>
                                         )}
                                         {note.geologicalLog.elevation && (
                                             <div>
-                                                <p className="text-xs text-gray-500 mb-1">Высота</p>
-                                                <p className="font-medium">{note.geologicalLog.elevation} м</p>
+                                                <p className="text-xs text-gray-500 mb-1">{t('notes.elevation')}</p>
+                                                <p className="font-medium">{note.geologicalLog.elevation} {t('notes.meters')}</p>
                                             </div>
                                         )}
                                         {note.geologicalLog.totalDepth && (
                                             <div>
-                                                <p className="text-xs text-gray-500 mb-1">Глубина</p>
-                                                <p className="font-medium">{note.geologicalLog.totalDepth} м</p>
+                                                <p className="text-xs text-gray-500 mb-1">{t('notes.totalDepth')}</p>
+                                                <p className="font-medium">{note.geologicalLog.totalDepth} {t('notes.meters')}</p>
                                             </div>
                                         )}
                                     </div>
@@ -374,7 +384,7 @@ const ViewNotePage = () => {
                                         <div className="border rounded-lg overflow-hidden bg-gray-50">
                                             <img 
                                                 src={note.geologicalLog.canvas} 
-                                                alt="Геологический лог"
+                                                alt={t('notes.geologicalLog')}
                                                 className="w-full h-auto"
                                             />
                                         </div>
@@ -383,7 +393,7 @@ const ViewNotePage = () => {
                                     {/* Слои */}
                                     {note.geologicalLog.layers && note.geologicalLog.layers.length > 0 && (
                                         <div>
-                                            <h4 className="font-semibold mb-3">Слои ({note.geologicalLog.layers.length})</h4>
+                                            <h4 className="font-semibold mb-3">{t('notes.layers')} ({note.geologicalLog.layers.length})</h4>
                                             <div className="space-y-2 max-h-96 overflow-y-auto">
                                                 {note.geologicalLog.layers.map((layer, index) => (
                                                     <div key={index} className="p-3 bg-gray-50 rounded-lg border">
@@ -396,7 +406,7 @@ const ViewNotePage = () => {
                                                                 <div className="flex items-center justify-between mb-1">
                                                                     <p className="font-medium text-sm">{layer.lithology}</p>
                                                                     <p className="text-xs text-gray-600">
-                                                                        {layer.depthFrom}м - {layer.depthTo}м
+                                                                        {layer.depthFrom}{t('notes.depthFrom')} {layer.depthTo}{t('notes.depthTo')}
                                                                     </p>
                                                                 </div>
                                                                 {layer.description && (
@@ -406,12 +416,12 @@ const ViewNotePage = () => {
                                                                 )}
                                                                 {layer.grain_size && (
                                                                     <p className="text-xs text-gray-500 mt-1">
-                                                                        Зернистость: {layer.grain_size}
+                                                                        {t('notes.grainSize')}: {layer.grain_size}
                                                                     </p>
                                                                 )}
                                                                 {layer.fossils && (
                                                                     <p className="text-xs text-gray-500 mt-1">
-                                                                        Ископаемые: {layer.fossils}
+                                                                        {t('notes.fossils')}: {layer.fossils}
                                                                     </p>
                                                                 )}
                                                             </div>
@@ -433,7 +443,7 @@ const ViewNotePage = () => {
                                             }}
                                             className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
                                         >
-                                            📥 Скачать лог (PNG)
+                                            📥 {t('notes.downloadLog')}
                                         </button>
                                     )}
                                 </div>
@@ -445,19 +455,19 @@ const ViewNotePage = () => {
                     <div className="space-y-6">
                         {/* Информация */}
                         <div className="bg-white rounded-lg shadow p-6">
-                            <h3 className="text-lg font-semibold mb-4">Информация</h3>
+                            <h3 className="text-lg font-semibold mb-4">{t('notes.information')}</h3>
                             <div className="space-y-3 text-sm">
                                 <div>
-                                    <p className="text-gray-500 mb-1">Автор</p>
+                                    <p className="text-gray-500 mb-1">{t('notes.author')}</p>
                                     <p className="font-medium text-gray-800">{note.authorName}</p>
                                 </div>
                                 <div>
-                                    <p className="text-gray-500 mb-1">Дата создания</p>
+                                    <p className="text-gray-500 mb-1">{t('notes.createdAt')}</p>
                                     <p className="font-medium text-gray-800">{formatDate(note.createdAt)}</p>
                                 </div>
                                 {note.location && (
                                     <div>
-                                        <p className="text-gray-500 mb-1">Локация</p>
+                                        <p className="text-gray-500 mb-1">{t('notes.locationInfo')}</p>
                                         <p className="font-medium text-gray-800 flex items-center gap-1">
                                             <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -468,9 +478,9 @@ const ViewNotePage = () => {
                                 )}
                                 {note.attachments && note.attachments.length > 0 && (
                                     <div>
-                                        <p className="text-gray-500 mb-1">Файлы</p>
+                                        <p className="text-gray-500 mb-1">{t('files.attachments')}</p>
                                         <p className="font-medium text-gray-800 flex items-center gap-1">
-                                            📎 {note.attachments.length} файл(ов)
+                                            📎 {note.attachments.length} {t('notes.filesCount')}
                                         </p>
                                     </div>
                                 )}
@@ -479,7 +489,7 @@ const ViewNotePage = () => {
 
                         {/* Действия */}
                         <div className="bg-white rounded-lg shadow p-6">
-                            <h3 className="text-lg font-semibold mb-4">Действия</h3>
+                            <h3 className="text-lg font-semibold mb-4">{t('notes.actions')}</h3>
                             <div className="space-y-2">
                                 <button
                                     onClick={() => router.push(`/pages/projects/${projectId}/notes/${noteId}/edit`)}
@@ -488,7 +498,7 @@ const ViewNotePage = () => {
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                     </svg>
-                                    Редактировать
+                                    {t('notes.edit')}
                                 </button>
                                 <button
                                     onClick={handleDeleteNote}
@@ -498,7 +508,7 @@ const ViewNotePage = () => {
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                     </svg>
-                                    {deleting ? 'Удаление...' : 'Удалить'}
+                                    {deleting ? t('notes.deleting') : t('notes.delete')}
                                 </button>
                             </div>
                         </div>

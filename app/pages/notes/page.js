@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { app, db, storage } from "@/app/api/firebase"; // Добавляем storage
+import { app, db, storage } from "@/app/api/firebase";
 import { 
     collection, 
     getDocs, 
@@ -19,15 +19,17 @@ import {
     uploadBytes, 
     getDownloadURL, 
     deleteObject 
-} from "firebase/storage"; // Импорты для работы с Storage
+} from "firebase/storage";
 import Sidebar from "@/app/components/sidebar";
 import Navbar from "@/app/components/navbar";
 import CreateNoteModal from "@/app/components/CreateNoteModal";
 import EditNoteModal from "@/app/components/EditNoteModal";
 import { useStrings } from "@/app/hooks/useStrings";
 
-// Компонент для добавления документа в библиотеку - ОБНОВЛЕННЫЙ
+// Компонент для добавления документа в библиотеку
 const AddDocumentModal = ({ isOpen, onClose, onSubmit }) => {
+    const { t } = useStrings();
+    
     const [documentData, setDocumentData] = useState({
         title: '',
         description: '',
@@ -42,17 +44,15 @@ const AddDocumentModal = ({ isOpen, onClose, onSubmit }) => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            // Проверяем размер файла (максимум 10MB)
             if (file.size > 10 * 1024 * 1024) {
-                alert('Файл слишком большой. Максимальный размер: 10MB');
+                alert(t('notes.fileTooLarge'));
                 return;
             }
             
-            // Автоматически заполняем название, если оно пустое
             if (!documentData.title) {
                 setDocumentData(prev => ({ 
                     ...prev, 
-                    title: file.name.replace(/\.[^/.]+$/, ""), // убираем расширение
+                    title: file.name.replace(/\.[^/.]+$/, ""),
                     file: file
                 }));
             } else {
@@ -61,21 +61,17 @@ const AddDocumentModal = ({ isOpen, onClose, onSubmit }) => {
         }
     };
 
-    // НОВАЯ ФУНКЦИЯ - загрузка файла в Firebase Storage
     const uploadFileToStorage = async (file, userId) => {
         try {
-            // Создаем уникальное имя файла
             const timestamp = new Date().getTime();
             const fileName = `${timestamp}_${file.name}`;
             const storageRef = ref(storage, `documents/${userId}/${fileName}`);
             
             setUploadProgress(25);
             
-            // Загружаем файл
             const snapshot = await uploadBytes(storageRef, file);
             setUploadProgress(75);
             
-            // Получаем ссылку для скачивания
             const downloadURL = await getDownloadURL(snapshot.ref);
             setUploadProgress(90);
             
@@ -84,7 +80,7 @@ const AddDocumentModal = ({ isOpen, onClose, onSubmit }) => {
                 type: file.type,
                 size: file.size,
                 url: downloadURL,
-                storagePath: snapshot.ref.fullPath, // Сохраняем путь для удаления
+                storagePath: snapshot.ref.fullPath,
                 lastModified: file.lastModified
             };
         } catch (error) {
@@ -104,15 +100,13 @@ const AddDocumentModal = ({ isOpen, onClose, onSubmit }) => {
             let fileData = null;
             
             if (documentData.file) {
-                // Получаем ID текущего пользователя
                 const auth = getAuth(app);
                 const userId = auth.currentUser?.uid;
                 
                 if (!userId) {
-                    throw new Error('Пользователь не авторизован');
+                    throw new Error(t('auth.loginError'));
                 }
                 
-                // Загружаем файл в Storage
                 fileData = await uploadFileToStorage(documentData.file, userId);
             }
 
@@ -122,13 +116,12 @@ const AddDocumentModal = ({ isOpen, onClose, onSubmit }) => {
                 type: documentData.type,
                 url: documentData.url,
                 tags: documentData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-                file: fileData // Теперь содержит ссылку на файл в Storage
+                file: fileData
             };
 
             setUploadProgress(100);
             await onSubmit(submissionData);
             
-            // Сброс формы
             setDocumentData({
                 title: '',
                 description: '',
@@ -139,7 +132,7 @@ const AddDocumentModal = ({ isOpen, onClose, onSubmit }) => {
             });
         } catch (error) {
             console.error('Error submitting document:', error);
-            alert('Ошибка при добавлении документа: ' + error.message);
+            alert(t('notes.errorAddingDocument') + ': ' + error.message);
         } finally {
             setUploading(false);
             setUploadProgress(0);
@@ -155,73 +148,68 @@ const AddDocumentModal = ({ isOpen, onClose, onSubmit }) => {
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                <h3 className="text-lg font-semibold mb-4">Добавить в библиотеку</h3>
+                <h3 className="text-lg font-semibold mb-4">{t('notes.addDocument')}</h3>
                 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Название *
+                            {t('notes.titleRequired')}
                         </label>
                         <input
                             type="text"
                             required
                             value={documentData.title}
-                            onChange={(e) => setDocumentData(prev => ({ ...prev, title: e.target.value }))
-                            }
+                            onChange={(e) => setDocumentData(prev => ({ ...prev, title: e.target.value }))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Название документа или статьи"
+                            placeholder={t('notes.documentTitlePlaceholder')}
                         />
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Описание
+                            {t('notes.description')}
                         </label>
                         <textarea
                             value={documentData.description}
-                            onChange={(e) => setDocumentData(prev => ({ ...prev, description: e.target.value }))
-                            }
+                            onChange={(e) => setDocumentData(prev => ({ ...prev, description: e.target.value }))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             rows="3"
-                            placeholder="Краткое описание содержания"
+                            placeholder={t('notes.descriptionPlaceholder')}
                         />
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Тип
+                            {t('notes.type')}
                         </label>
                         <select
                             value={documentData.type}
-                            onChange={(e) => setDocumentData(prev => ({ ...prev, type: e.target.value }))
-                            }
+                            onChange={(e) => setDocumentData(prev => ({ ...prev, type: e.target.value }))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
-                            <option value="article">Статья</option>
-                            <option value="document">Документ</option>
-                            <option value="book">Книга</option>
-                            <option value="research">Исследование</option>
-                            <option value="video">Видео</option>
-                            <option value="pdf">PDF</option>
-                            <option value="image">Изображение</option>
-                            <option value="other">Другое</option>
+                            <option value="article">{t('notes.article')}</option>
+                            <option value="document">{t('notes.document')}</option>
+                            <option value="book">{t('notes.book')}</option>
+                            <option value="research">{t('notes.researchType')}</option>
+                            <option value="video">{t('notes.video')}</option>
+                            <option value="pdf">{t('notes.pdf')}</option>
+                            <option value="image">{t('notes.image')}</option>
+                            <option value="other">{t('notes.otherType')}</option>
                         </select>
                     </div>
 
-                    {/* Выбор между файлом и ссылкой */}
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
                         <div className="text-center">
                             <h4 className="text-sm font-medium text-gray-700 mb-2">
-                                Выберите способ добавления:
+                                {t('notes.chooseMethod')}
                             </h4>
                             
-                            {/* Загрузка файла */}
                             <div className="mb-3">
                                 <label className="cursor-pointer inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                     </svg>
-                                    Загрузить файл
+                                    {t('notes.uploadFile')}
                                     <input
                                         type="file"
                                         onChange={handleFileChange}
@@ -231,11 +219,10 @@ const AddDocumentModal = ({ isOpen, onClose, onSubmit }) => {
                                     />
                                 </label>
                                 <p className="text-xs text-gray-500 mt-1">
-                                    Максимум 10MB. Файл будет загружен в Firebase Storage
+                                    {t('notes.maxSize')}
                                 </p>
                             </div>
 
-                            {/* Отображение выбранного файла */}
                             {documentData.file && (
                                 <div className="bg-green-50 border border-green-200 rounded p-3 mb-3">
                                     <div className="flex items-center justify-between">
@@ -264,16 +251,14 @@ const AddDocumentModal = ({ isOpen, onClose, onSubmit }) => {
                                 </div>
                             )}
 
-                            <div className="text-sm text-gray-500 mb-2">или</div>
+                            <div className="text-sm text-gray-500 mb-2">{t('notes.orText')}</div>
                             
-                            {/* URL ссылка */}
                             <input
                                 type="url"
                                 value={documentData.url}
-                                onChange={(e) => setDocumentData(prev => ({ ...prev, url: e.target.value }))
-                                }
+                                onChange={(e) => setDocumentData(prev => ({ ...prev, url: e.target.value }))}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="https://example.com - добавить ссылку"
+                                placeholder={t('notes.addLink')}
                                 disabled={!!documentData.file || uploading}
                             />
                         </div>
@@ -281,28 +266,26 @@ const AddDocumentModal = ({ isOpen, onClose, onSubmit }) => {
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Теги (через запятую)
+                            {t('notes.tags')}
                         </label>
                         <input
                             type="text"
                             value={documentData.tags}
-                            onChange={(e) => setDocumentData(prev => ({ ...prev, tags: e.target.value }))
-                            }
+                            onChange={(e) => setDocumentData(prev => ({ ...prev, tags: e.target.value }))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="наука, технологии, исследование"
+                            placeholder={t('notes.tagsPlaceholder')}
                             disabled={uploading}
                         />
                     </div>
 
-                    {/* Progress bar */}
                     {uploading && (
                         <div className="w-full">
                             <div className="flex justify-between text-sm text-gray-600 mb-1">
                                 <span>
-                                    {uploadProgress < 25 ? 'Подготовка файла...' :
-                                     uploadProgress < 75 ? 'Загрузка в Storage...' :
-                                     uploadProgress < 90 ? 'Получение ссылки...' :
-                                     uploadProgress < 100 ? 'Сохранение в базу...' : 'Завершено!'}
+                                    {uploadProgress < 25 ? t('notes.preparingFile') :
+                                     uploadProgress < 75 ? t('notes.uploadingToStorage') :
+                                     uploadProgress < 90 ? t('notes.gettingLink') :
+                                     uploadProgress < 100 ? t('notes.savingToDatabase') : t('notes.completed')}
                                 </span>
                                 <span>{uploadProgress}%</span>
                             </div>
@@ -321,7 +304,7 @@ const AddDocumentModal = ({ isOpen, onClose, onSubmit }) => {
                             disabled={!documentData.title.trim() || uploading}
                             className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
-                            {uploading ? 'Загружаем...' : 'Добавить'}
+                            {uploading ? t('notes.uploading') : t('notes.add')}
                         </button>
                         <button
                             type="button"
@@ -329,7 +312,7 @@ const AddDocumentModal = ({ isOpen, onClose, onSubmit }) => {
                             disabled={uploading}
                             className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:opacity-50 transition-colors"
                         >
-                            Отмена
+                            {t('cancel')}
                         </button>
                     </div>
                 </form>
@@ -338,8 +321,10 @@ const AddDocumentModal = ({ isOpen, onClose, onSubmit }) => {
     );
 };
 
-// Обновленный компонент DocumentCard для работы со Storage
+// Компонент DocumentCard
 const DocumentCard = ({ document, onDelete }) => {
+    const { t } = useStrings();
+    
     const getTypeIcon = (type) => {
         switch (type) {
             case 'article': return '📄';
@@ -366,6 +351,10 @@ const DocumentCard = ({ document, onDelete }) => {
         }
     };
 
+    const getTypeText = (type) => {
+        return t(`notes.${type}`) || type;
+    };
+
     const formatFileSize = (bytes) => {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
@@ -374,7 +363,6 @@ const DocumentCard = ({ document, onDelete }) => {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
-    // ОБНОВЛЕННАЯ ФУНКЦИЯ - открытие файла из Storage
     const handleFileOpen = () => {
         if (document.file && document.file.url) {
             window.open(document.file.url, '_blank');
@@ -423,16 +411,9 @@ const DocumentCard = ({ document, onDelete }) => {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(document.type)}`}>
-                        {document.type === 'article' ? 'Статья' :
-                         document.type === 'book' ? 'Книга' :
-                         document.type === 'video' ? 'Видео' :
-                         document.type === 'research' ? 'Исследование' :
-                         document.type === 'document' ? 'Документ' :
-                         document.type === 'pdf' ? 'PDF' :
-                         document.type === 'image' ? 'Изображение' : 'Другое'}
+                        {getTypeText(document.type)}
                     </span>
                     
-                    {/* Кнопки действий */}
                     <div className="flex gap-2">
                         {document.url && (
                             <a 
@@ -441,7 +422,7 @@ const DocumentCard = ({ document, onDelete }) => {
                                 rel="noopener noreferrer"
                                 className="text-blue-600 hover:text-blue-800 text-xs"
                             >
-                                🔗 Открыть
+                                🔗 {t('notes.openLink')}
                             </a>
                         )}
                         {document.file && document.file.url && (
@@ -449,7 +430,7 @@ const DocumentCard = ({ document, onDelete }) => {
                                 onClick={handleFileOpen}
                                 className="text-green-600 hover:text-green-800 text-xs"
                             >
-                                📂 Открыть файл
+                                📂 {t('notes.openFile')}
                             </button>
                         )}
                     </div>
@@ -469,7 +450,6 @@ const DocumentCard = ({ document, onDelete }) => {
                 )}
             </div>
             
-            {/* Информация о файле */}
             {document.file && (
                 <div className="text-xs text-gray-500 mt-2 flex justify-between">
                     <span>📎 {document.file.name}</span>
@@ -479,7 +459,7 @@ const DocumentCard = ({ document, onDelete }) => {
             
             {document.createdAt && (
                 <div className="text-xs text-gray-500 mt-1">
-                    Добавлено: {new Date(document.createdAt).toLocaleDateString('ru-RU')}
+                    {t('notes.added')}: {new Date(document.createdAt).toLocaleDateString()}
                 </div>
             )}
         </div>
@@ -491,7 +471,6 @@ export default function Notes() {
     const router = useRouter();
     const { t } = useStrings();
     
-    // Существующие состояния для заметок
     const [notes, setNotes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -500,16 +479,14 @@ export default function Notes() {
     const [currentUser, setCurrentUser] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [filterBy, setFilterBy] = useState("all");
-    const [selectedNote, setSelectedNote] = useState(null); // Для просмотра заметки справа
+    const [selectedNote, setSelectedNote] = useState(null);
 
-    // Новые состояния для библиотеки
     const [documents, setDocuments] = useState([]);
     const [isAddDocumentModalOpen, setIsAddDocumentModalOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState('notes'); // 'notes' или 'library'
+    const [activeTab, setActiveTab] = useState('notes');
     const [librarySearchTerm, setLibrarySearchTerm] = useState("");
     const [libraryFilterBy, setLibraryFilterBy] = useState("all");
 
-    // Authentication check
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -524,7 +501,6 @@ export default function Notes() {
         return () => unsubscribe();
     }, [auth, router]);
 
-    // Существующие функции для заметок...
     const fetchNotes = async (userId) => {
         try {
             setLoading(true);
@@ -546,7 +522,6 @@ export default function Notes() {
         }
     };
 
-    // Новые функции для библиотеки
     const fetchDocuments = async (userId) => {
         try {
             const documentsRef = collection(db, 'documents');
@@ -578,37 +553,31 @@ export default function Notes() {
             setIsAddDocumentModalOpen(false);
         } catch (error) {
             console.error('Error creating document:', error);
-            alert('Ошибка при добавлении документа');
+            alert(t('notes.errorAddingDocument'));
         }
     };
 
-    // ОБНОВЛЕННАЯ ФУНКЦИЯ - удаление документа и файла из Storage
     const handleDeleteDocument = async (documentId, storagePath) => {
-        if (window.confirm('Удалить этот документ из библиотеки?')) {
+        if (window.confirm(t('notes.deleteDocument'))) {
             try {
-                // Удаляем файл из Storage, если он есть
                 if (storagePath) {
                     try {
                         const fileRef = ref(storage, storagePath);
                         await deleteObject(fileRef);
-                        console.log('File deleted from storage');
                     } catch (error) {
                         console.error('Error deleting file from storage:', error);
-                        // Продолжаем удаление документа из базы, даже если файл не удалился
                     }
                 }
 
-                // Удаляем документ из Firestore
                 await deleteDoc(doc(db, 'documents', documentId));
                 await fetchDocuments(currentUser.uid);
             } catch (error) {
                 console.error('Error deleting document:', error);
-                alert('Ошибка при удалении документа');
+                alert(t('notes.errorDeletingDocument'));
             }
         }
     };
 
-    // Существующие функции для заметок (сокращенно)...
     const handleCreateNote = async (noteData) => {
         try {
             const newNote = {
@@ -644,7 +613,7 @@ export default function Notes() {
     };
 
     const handleDeleteNote = async (noteId) => {
-        if (window.confirm('Удалить эту заметку?')) {
+        if (window.confirm(t('notes.confirmDeleteNote'))) {
             try {
                 await deleteDoc(doc(db, 'notes', noteId));
                 fetchNotes(currentUser.uid);
@@ -676,7 +645,6 @@ export default function Notes() {
         setSelectedNote(note);
     };
 
-    // Фильтры
     const filteredNotes = notes.filter(note => {
         const matchesSearch = note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             note.content.toLowerCase().includes(searchTerm.toLowerCase());
@@ -703,7 +671,7 @@ export default function Notes() {
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('ru-RU', {
+        return date.toLocaleDateString(undefined, {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
@@ -727,7 +695,7 @@ export default function Notes() {
                     <div className="flex-1 flex items-center justify-center">
                         <div className="text-center">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                            <p className="mt-4 text-gray-600">Загрузка...</p>
+                            <p className="mt-4 text-gray-600">{t('loading')}</p>
                         </div>
                     </div>
                 </div>
@@ -746,7 +714,7 @@ export default function Notes() {
                     <div className="mb-6">
                         <div className="flex justify-between items-center mb-4">
                             <div className="flex items-center gap-6">
-                                <h1 className="text-3xl font-bold text-gray-900">Знания</h1>
+                                <h1 className="text-3xl font-bold text-gray-900">{t('nav.notes')}</h1>
                                 
                                 {/* Tab Navigation */}
                                 <div className="flex bg-gray-200 rounded-lg p-1">
@@ -758,7 +726,7 @@ export default function Notes() {
                                                 : 'text-gray-600 hover:text-gray-900'
                                         }`}
                                     >
-                                        📝 Заметки ({notes.length})
+                                        📝 {t('notes.notesTab')} ({notes.length})
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('library')}
@@ -768,7 +736,7 @@ export default function Notes() {
                                                 : 'text-gray-600 hover:text-gray-900'
                                         }`}
                                     >
-                                        📚 Библиотека ({documents.length})
+                                        📚 {t('notes.libraryTab')} ({documents.length})
                                     </button>
                                 </div>
                             </div>
@@ -780,7 +748,7 @@ export default function Notes() {
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                                 </svg>
-                                {activeTab === 'notes' ? 'Новая заметка' : 'Добавить в библиотеку'}
+                                {activeTab === 'notes' ? t('notes.newNote') : t('notes.addToLibrary')}
                             </button>
                         </div>
 
@@ -791,7 +759,7 @@ export default function Notes() {
                                     <div className="flex-1">
                                         <input
                                             type="text"
-                                            placeholder="Поиск заметок..."
+                                            placeholder={t('notes.searchNotes')}
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
                                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -802,16 +770,16 @@ export default function Notes() {
                                         onChange={(e) => setFilterBy(e.target.value)}
                                         className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
                                     >
-                                        <option value="all">Все заметки</option>
-                                        <option value="recent">Недавние</option>
-                                        <option value="favorites">Избранные</option>
+                                        <option value="all">{t('notes.allNotes')}</option>
+                                        <option value="recent">{t('notes.recent')}</option>
+                                        <option value="favorites">{t('notes.favorites')}</option>
                                     </select>
                                 </div>
 
                                 <div className="flex gap-4 text-sm text-gray-600 mb-4">
-                                    <span>{notes.length} заметок</span>
-                                    <span>{notes.filter(n => n.isFavorite).length} избранных</span>
-                                    <span>{filteredNotes.length} показано</span>
+                                    <span>{notes.length} {t('notes.totalNotes')}</span>
+                                    <span>{notes.filter(n => n.isFavorite).length} {t('notes.favoritesCount')}</span>
+                                    <span>{filteredNotes.length} {t('notes.showing')}</span>
                                 </div>
                             </>
                         )}
@@ -823,7 +791,7 @@ export default function Notes() {
                                     <div className="flex-1">
                                         <input
                                             type="text"
-                                            placeholder="Поиск в библиотеке..."
+                                            placeholder={t('notes.searchLibrary')}
                                             value={librarySearchTerm}
                                             onChange={(e) => setLibrarySearchTerm(e.target.value)}
                                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -834,21 +802,21 @@ export default function Notes() {
                                         onChange={(e) => setLibraryFilterBy(e.target.value)}
                                         className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
                                     >
-                                        <option value="all">Все типы</option>
-                                        <option value="article">Статьи</option>
-                                        <option value="book">Книги</option>
-                                        <option value="video">Видео</option>
-                                        <option value="research">Исследования</option>
-                                        <option value="document">Документы</option>
-                                        <option value="pdf">PDF</option>
-                                        <option value="image">Изображения</option>
-                                        <option value="other">Другое</option>
+                                        <option value="all">{t('notes.allTypes')}</option>
+                                        <option value="article">{t('notes.articles')}</option>
+                                        <option value="book">{t('notes.books')}</option>
+                                        <option value="video">{t('notes.videos')}</option>
+                                        <option value="research">{t('notes.research')}</option>
+                                        <option value="document">{t('notes.documents')}</option>
+                                        <option value="pdf">{t('notes.pdfs')}</option>
+                                        <option value="image">{t('notes.images')}</option>
+                                        <option value="other">{t('notes.other')}</option>
                                     </select>
                                 </div>
 
                                 <div className="flex gap-4 text-sm text-gray-600 mb-4">
-                                    <span>{documents.length} документов</span>
-                                    <span>{filteredDocuments.length} показано</span>
+                                    <span>{documents.length} {t('notes.totalDocuments')}</span>
+                                    <span>{filteredDocuments.length} {t('notes.shown')}</span>
                                 </div>
                             </>
                         )}
@@ -856,19 +824,18 @@ export default function Notes() {
 
                     {/* Content Area */}
                     {activeTab === 'notes' ? (
-                        /* Notes Content */
                         filteredNotes.length === 0 ? (
                             <div className="text-center py-12">
                                 <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                                    {searchTerm || filterBy !== "all" ? 'Заметки не найдены' : 'Пока нет заметок'}
+                                    {searchTerm || filterBy !== "all" ? t('notes.noNotesFound') : t('notes.noNotesYet')}
                                 </h3>
                                 <p className="text-gray-600 mb-4">
                                     {searchTerm || filterBy !== "all" 
-                                        ? 'Попробуйте изменить критерии поиска'
-                                        : 'Создайте свою первую заметку'
+                                        ? t('notes.tryChangingFilter')
+                                        : t('notes.createFirstNote')
                                     }
                                 </p>
                                 {!searchTerm && filterBy === "all" && (
@@ -876,7 +843,7 @@ export default function Notes() {
                                         onClick={() => setIsCreateModalOpen(true)}
                                         className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                                     >
-                                        Создать первую заметку
+                                        {t('notes.createYourFirstNote')}
                                     </button>
                                 )}
                             </div>
@@ -939,7 +906,7 @@ export default function Notes() {
                                                                     ? 'text-yellow-500 bg-yellow-50 hover:bg-yellow-100' 
                                                                     : 'text-gray-400 hover:text-yellow-500 hover:bg-gray-100'
                                                             }`}
-                                                            title={selectedNote.isFavorite ? 'Убрать из избранного' : 'Добавить в избранное'}
+                                                            title={selectedNote.isFavorite ? t('notes.removeFromFavorites') : t('notes.addToFavorites')}
                                                         >
                                                             <svg className="w-5 h-5" fill={selectedNote.isFavorite ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
@@ -948,7 +915,7 @@ export default function Notes() {
                                                         <button
                                                             onClick={() => handleEditNote(selectedNote)}
                                                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                            title="Редактировать"
+                                                            title={t('edit')}
                                                         >
                                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -960,7 +927,7 @@ export default function Notes() {
                                                                 setSelectedNote(null);
                                                             }}
                                                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                            title="Удалить"
+                                                            title={t('delete')}
                                                         >
                                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -969,9 +936,9 @@ export default function Notes() {
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-4 text-sm text-gray-500">
-                                                    <span>Создано: {formatDate(selectedNote.createdAt)}</span>
+                                                    <span>{t('notes.created')}: {formatDate(selectedNote.createdAt)}</span>
                                                     <span>•</span>
-                                                    <span>Обновлено: {formatDate(selectedNote.updatedAt)}</span>
+                                                    <span>{t('notes.lastUpdated')}: {formatDate(selectedNote.updatedAt)}</span>
                                                     {selectedNote.category && (
                                                         <>
                                                             <span>•</span>
@@ -998,7 +965,7 @@ export default function Notes() {
                                                 <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                 </svg>
-                                                <p className="text-lg">Выберите заметку для просмотра</p>
+                                                <p className="text-lg">{t('notes.selectNote')}</p>
                                             </div>
                                         </div>
                                     )}
@@ -1006,17 +973,16 @@ export default function Notes() {
                             </div>
                         )
                     ) : (
-                        /* Library Content */
                         filteredDocuments.length === 0 ? (
                             <div className="text-center py-12">
                                 <div className="text-6xl mb-4">📚</div>
                                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                                    {librarySearchTerm || libraryFilterBy !== "all" ? 'Документы не найдены' : 'Библиотека пуста'}
+                                    {librarySearchTerm || libraryFilterBy !== "all" ? t('notes.noDocuments') : t('notes.libraryEmpty')}
                                 </h3>
                                 <p className="text-gray-600 mb-4">
                                     {librarySearchTerm || libraryFilterBy !== "all" 
-                                        ? 'Попробуйте изменить критерии поиска'
-                                        : 'Добавьте первый документ в свою библиотеку'
+                                        ? t('notes.tryChangingLibraryFilter')
+                                        : t('notes.addFirstDocument')
                                     }
                                 </p>
                                 {!librarySearchTerm && libraryFilterBy === "all" && (
@@ -1024,7 +990,7 @@ export default function Notes() {
                                         onClick={() => setIsAddDocumentModalOpen(true)}
                                         className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                                     >
-                                        Добавить первый документ
+                                        {t('notes.createFirstDocumentBtn')}
                                     </button>
                                 )}
                             </div>

@@ -4,10 +4,12 @@ import { useRouter } from "next/navigation";
 import { getAuth, signOut } from "firebase/auth";
 import { app, db } from "@/app/api/firebase";
 import { doc, getDoc, collection, getDocs } from "firebase/firestore";
+import { useStrings } from "@/app/hooks/useStrings";
 
 export default function NoSubscription() {
     const router = useRouter();
     const auth = getAuth(app);
+    const { t } = useStrings();
     const [loading, setLoading] = useState(true);
     const [orgName, setOrgName] = useState('');
     const [subscription, setSubscription] = useState(null);
@@ -21,15 +23,13 @@ export default function NoSubscription() {
             }
 
             try {
-                // Находим организацию пользователя
                 const organizationsSnapshot = await getDocs(collection(db, 'organizations'));
                 
                 for (const orgDoc of organizationsSnapshot.docs) {
                     const userInOrgDoc = await getDoc(doc(db, `organizations/${orgDoc.id}/users/${user.uid}`));
                     if (userInOrgDoc.exists()) {
-                        setOrgName(orgDoc.data().name || 'Вашей организации');
+                        setOrgName(orgDoc.data().name || t('noSubscription.yourOrganization'));
                         
-                        // Получаем подписку
                         const subDoc = await getDoc(doc(db, `organizations/${orgDoc.id}/subscription/current`));
                         if (subDoc.exists()) {
                             setSubscription(subDoc.data());
@@ -57,7 +57,7 @@ export default function NoSubscription() {
     };
 
     const formatDate = (dateString) => {
-        if (!dateString) return 'не указана';
+        if (!dateString) return t('noSubscription.notSpecified');
         return new Date(dateString).toLocaleDateString('ru-RU', {
             day: '2-digit',
             month: 'long',
@@ -68,10 +68,12 @@ export default function NoSubscription() {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="text-xl text-gray-600">Загрузка...</div>
+                <div className="text-xl text-gray-600">{t('noSubscription.loading')}</div>
             </div>
         );
     }
+
+    const isExpired = subscription?.endDate && new Date(subscription.endDate) < new Date();
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-red-50 to-orange-50 p-4">
@@ -87,7 +89,7 @@ export default function NoSubscription() {
 
                 {/* Title */}
                 <h1 className="text-3xl font-bold text-center text-gray-900 mb-4">
-                    Доступ ограничен
+                    {t('noSubscription.accessRestricted')}
                 </h1>
 
                 {/* Message */}
@@ -100,9 +102,11 @@ export default function NoSubscription() {
                         </div>
                         <div className="ml-3">
                             <p className="text-sm text-red-700 font-medium">
-                                {subscription?.endDate && new Date(subscription.endDate) < new Date()
-                                    ? `Подписка ${orgName} истекла ${formatDate(subscription.endDate)}`
-                                    : `У ${orgName} отсутствует активная подписка`}
+                                {isExpired
+                                    ? t('noSubscription.subscriptionExpired')
+                                        .replace('{orgName}', orgName)
+                                        .replace('{date}', formatDate(subscription.endDate))
+                                    : t('noSubscription.noActiveSubscription').replace('{orgName}', orgName)}
                             </p>
                         </div>
                     </div>
@@ -111,20 +115,20 @@ export default function NoSubscription() {
                 {/* Details */}
                 <div className="space-y-4 mb-8">
                     <p className="text-gray-600 text-center">
-                        Для доступа к системе необходима активная подписка на сервис GeoNote.
+                        {t('noSubscription.accessRequirement')}
                     </p>
                     
                     {subscription && (
                         <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                             <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Статус:</span>
+                                <span className="text-gray-600">{t('noSubscription.status')}:</span>
                                 <span className="font-semibold text-red-600">
-                                    {subscription.endDate && new Date(subscription.endDate) < new Date() ? 'Истекла' : 'Не активна'}
+                                    {isExpired ? t('noSubscription.expired') : t('noSubscription.notActive')}
                                 </span>
                             </div>
                             {subscription.endDate && (
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">Дата окончания:</span>
+                                    <span className="text-gray-600">{t('noSubscription.endDate')}:</span>
                                     <span className="font-semibold text-gray-900">{formatDate(subscription.endDate)}</span>
                                 </div>
                             )}
@@ -132,10 +136,10 @@ export default function NoSubscription() {
                     )}
 
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
-                        <h3 className="font-semibold text-blue-900 mb-2">Что делать?</h3>
+                        <h3 className="font-semibold text-blue-900 mb-2">{t('noSubscription.whatToDo')}</h3>
                         <ul className="text-sm text-blue-800 space-y-1">
-                            <li>• Свяжитесь с администратором вашей организации</li>
-                            <li>• Администратор может продлить подписку</li>
+                            <li>• {t('noSubscription.contactAdmin')}</li>
+                            <li>• {t('noSubscription.adminCanRenew')}</li>
                         </ul>
                     </div>
                 </div>
@@ -146,14 +150,14 @@ export default function NoSubscription() {
                         onClick={handleLogout}
                         className="px-8 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
                     >
-                        Выйти из системы
+                        {t('noSubscription.logout')}
                     </button>
                 </div>
 
                 {/* Footer */}
                 <div className="mt-8 pt-6 border-t text-center">
                     <p className="text-xs text-gray-500">
-                        GeoNote © 2025 • Made by abdu1axad
+                        {t('noSubscription.footer')}
                     </p>
                 </div>
             </div>

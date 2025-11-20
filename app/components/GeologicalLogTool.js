@@ -10,7 +10,7 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
         location: '',
         elevation: '',
         totalDepth: '',
-        scale: 100, // пикселей на метр
+        scale: 100,
         layers: initialData?.layers || []
     });
 
@@ -30,30 +30,30 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
 
     // Типы литологии с цветами и паттернами
     const lithologyTypes = {
-        sandstone: { name: 'Песчаник', color: '#F4D03F', pattern: 'dots' },
-        limestone: { name: 'Известняк', color: '#85C1E2', pattern: 'brick' },
-        shale: { name: 'Сланец', color: '#95A5A6', pattern: 'horizontal' },
-        clay: { name: 'Глина', color: '#D4AC6E', pattern: 'solid' },
-        coal: { name: 'Уголь', color: '#34495E', pattern: 'solid' },
-        granite: { name: 'Гранит', color: '#E8A798', pattern: 'crosses' },
-        conglomerate: { name: 'Конгломерат', color: '#BDC3C7', pattern: 'circles' },
-        marl: { name: 'Мергель', color: '#AED6F1', pattern: 'wavy' },
-        dolomite: { name: 'Доломит', color: '#F8B88B', pattern: 'brick' },
-        gypsum: { name: 'Гипс', color: '#FAD7A0', pattern: 'diagonal' }
+        sandstone: { name: t('geologicalLog.sandstone'), color: '#F4D03F', pattern: 'dots' },
+        limestone: { name: t('geologicalLog.limestone'), color: '#85C1E2', pattern: 'brick' },
+        shale: { name: t('geologicalLog.shale'), color: '#95A5A6', pattern: 'horizontal' },
+        clay: { name: t('geologicalLog.clay'), color: '#D4AC6E', pattern: 'solid' },
+        coal: { name: t('geologicalLog.coal'), color: '#34495E', pattern: 'solid' },
+        granite: { name: t('geologicalLog.granite'), color: '#E8A798', pattern: 'crosses' },
+        conglomerate: { name: t('geologicalLog.conglomerate'), color: '#BDC3C7', pattern: 'circles' },
+        marl: { name: t('geologicalLog.marl'), color: '#AED6F1', pattern: 'wavy' },
+        dolomite: { name: t('geologicalLog.dolomite'), color: '#F8B88B', pattern: 'brick' },
+        gypsum: { name: t('geologicalLog.gypsum'), color: '#FAD7A0', pattern: 'diagonal' }
     };
 
     const grainSizes = {
-        'very_fine': 'Очень мелкий',
-        'fine': 'Мелкий',
-        'medium': 'Средний',
-        'coarse': 'Крупный',
-        'very_coarse': 'Очень крупный'
+        'very_fine': t('geologicalLog.veryFine'),
+        'fine': t('geologicalLog.fine'),
+        'medium': t('geologicalLog.medium'),
+        'coarse': t('geologicalLog.coarse'),
+        'very_coarse': t('geologicalLog.veryCoarse')
     };
 
     // Добавление слоя
     const handleAddLayer = () => {
         if (!currentLayer.depthFrom || !currentLayer.depthTo) {
-            alert('Пожалуйста, укажите глубину слоя');
+            alert(t('geologicalLog.enterDepth'));
             return;
         }
 
@@ -61,7 +61,7 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
         const to = parseFloat(currentLayer.depthTo);
 
         if (from >= to) {
-            alert('Глубина "До" должна быть больше глубины "От"');
+            alert(t('geologicalLog.depthError'));
             return;
         }
 
@@ -78,7 +78,6 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
             layers: [...prev.layers, newLayer].sort((a, b) => a.depthFrom - b.depthFrom)
         }));
 
-        // Очистка формы
         setCurrentLayer({
             depthFrom: to.toString(),
             depthTo: '',
@@ -93,7 +92,7 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
 
     // Удаление слоя
     const handleDeleteLayer = (layerId) => {
-        if (window.confirm('Удалить этот слой?')) {
+        if (window.confirm(t('geologicalLog.deleteLayer'))) {
             setLogData(prev => ({
                 ...prev,
                 layers: prev.layers.filter(l => l.id !== layerId)
@@ -113,11 +112,9 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
         const width = canvas.width;
         const height = canvas.height;
 
-        // Очистка
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, width, height);
 
-        // Настройки
         const leftMargin = 60;
         const rightMargin = 50;
         const topMargin = 80;
@@ -128,20 +125,20 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
         ctx.fillStyle = '#000';
         ctx.font = 'bold 16px Arial';
         ctx.textAlign = 'left';
-        ctx.fillText(logData.wellName || 'Геологический лог', leftMargin, 20);
+        ctx.fillText(logData.wellName || t('geologicalLog.title'), leftMargin, 20);
         
         ctx.font = '11px Arial';
         let headerY = 35;
         if (logData.location) {
-            ctx.fillText(`Локация: ${logData.location}`, leftMargin, headerY);
+            ctx.fillText(`${t('geologicalLog.location')}: ${logData.location}`, leftMargin, headerY);
             headerY += 14;
         }
         if (logData.elevation) {
-            ctx.fillText(`Высота устья: ${logData.elevation} м`, leftMargin, headerY);
+            ctx.fillText(`${t('geologicalLog.elevation')}: ${logData.elevation} м`, leftMargin, headerY);
             headerY += 14;
         }
         if (logData.totalDepth) {
-            ctx.fillText(`Общая глубина: ${logData.totalDepth} м`, leftMargin, headerY);
+            ctx.fillText(`${t('geologicalLog.totalDepth')}: ${logData.totalDepth} м`, leftMargin, headerY);
         }
 
         // Сетка и глубины
@@ -155,13 +152,11 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
             for (let depth = 0; depth <= maxDepth; depth += 10) {
                 const y = topMargin + (depth * scale / 10);
                 
-                // Горизонтальная линия
                 ctx.beginPath();
                 ctx.moveTo(leftMargin, y);
                 ctx.lineTo(width - rightMargin, y);
                 ctx.stroke();
 
-                // Метка глубины (выровнена по линии)
                 ctx.fillStyle = '#000';
                 ctx.font = '10px Arial';
                 ctx.textAlign = 'right';
@@ -169,20 +164,17 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
             }
         }
         
-        // Глубины на границах слоев (без сетки)
         if (!showGrid && logData.layers.length > 0) {
             ctx.fillStyle = '#000';
             ctx.font = '10px Arial';
             ctx.textAlign = 'right';
             
-            // Собираем уникальные глубины
             const uniqueDepths = new Set();
             logData.layers.forEach(layer => {
                 uniqueDepths.add(layer.depthFrom);
                 uniqueDepths.add(layer.depthTo);
             });
             
-            // Отрисовываем метки
             Array.from(uniqueDepths).sort((a, b) => a - b).forEach(depth => {
                 const y = topMargin + (depth * scale / 10);
                 ctx.fillText(`${depth}m`, leftMargin - 5, y + 4);
@@ -195,27 +187,22 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
             const yEnd = topMargin + (layer.depthTo * scale / 10);
             const layerHeight = yEnd - yStart;
 
-            // Основной цвет
             ctx.fillStyle = layer.color;
             ctx.fillRect(leftMargin, yStart, logWidth, layerHeight);
 
-            // Паттерн
             drawPattern(ctx, leftMargin, yStart, logWidth, layerHeight, 
                        lithologyTypes[layer.lithology].pattern, layer.color);
 
-            // Граница слоя
             ctx.strokeStyle = '#000';
             ctx.lineWidth = 2;
             ctx.strokeRect(leftMargin, yStart, logWidth, layerHeight);
 
-            // Выделение выбранного слоя
             if (selectedLayer === layer.id) {
                 ctx.strokeStyle = '#e74c3c';
                 ctx.lineWidth = 3;
                 ctx.strokeRect(leftMargin, yStart, logWidth, layerHeight);
             }
 
-            // Название литологии и размер зерна
             if (layerHeight > 20) {
                 ctx.fillStyle = '#000';
                 ctx.font = 'bold 11px Arial';
@@ -223,14 +210,12 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
                 const text = lithologyTypes[layer.lithology].name;
                 ctx.fillText(text, leftMargin + logWidth / 2, yStart + layerHeight / 2 - 5);
                 
-                // Размер зерна под названием
                 if (layer.grain_size) {
                     ctx.font = '9px Arial';
                     ctx.fillText(`(${grainSizes[layer.grain_size]})`, leftMargin + logWidth / 2, yStart + layerHeight / 2 + 8);
                 }
             }
 
-            // Описание справа
             if (layer.description) {
                 ctx.fillStyle = '#000';
                 ctx.font = '10px Arial';
@@ -255,12 +240,10 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
             }
         });
 
-        // Легенда
         drawLegend(ctx, width, height);
 
-    }, [logData, showGrid, selectedLayer]);
+    }, [logData, showGrid, selectedLayer, t]);
 
-    // Функция рисования паттернов
     const drawPattern = (ctx, x, y, width, height, pattern, baseColor) => {
         ctx.save();
         ctx.strokeStyle = adjustColor(baseColor, -40);
@@ -336,7 +319,6 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
         ctx.restore();
     };
 
-    // Вспомогательная функция для изменения яркости цвета
     const adjustColor = (color, amount) => {
         const num = parseInt(color.replace('#', ''), 16);
         const r = Math.max(0, Math.min(255, (num >> 16) + amount));
@@ -345,9 +327,7 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
         return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
     };
 
-    // Легенда
     const drawLegend = (ctx, width, height) => {
-        // Получаем уникальные типы литологии из добавленных слоев
         const usedLithologies = [...new Set(logData.layers.map(layer => layer.lithology))];
         
         if (usedLithologies.length === 0) return;
@@ -365,7 +345,7 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
         ctx.fillStyle = '#000';
         ctx.font = 'bold 12px Arial';
         ctx.textAlign = 'left';
-        ctx.fillText('Легенда:', legendX + 10, legendY + 20);
+        ctx.fillText(t('geologicalLog.legend') + ':', legendX + 10, legendY + 20);
 
         ctx.font = '10px Arial';
         let yOffset = 35;
@@ -384,7 +364,6 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
         });
     };
 
-    // Экспорт в PNG
     const handleExport = () => {
         const canvas = canvasRef.current;
         const link = document.createElement('a');
@@ -393,7 +372,6 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
         link.click();
     };
 
-    // Сохранение данных
     const handleSave = () => {
         if (onSave) {
             onSave({
@@ -406,19 +384,19 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
     return (
         <div className="bg-white rounded-lg shadow-lg p-6">
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">Геологический лог</h2>
+                <h2 className="text-2xl font-bold">{t('geologicalLog.title')}</h2>
                 <div className="flex gap-2">
                     <button
                         onClick={handleExport}
                         className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
                     >
-                        📥 Экспорт PNG
+                        📥 {t('geologicalLog.exportPNG')}
                     </button>
                     <button
                         onClick={handleSave}
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
                     >
-                        💾 Сохранить
+                        💾 {t('geologicalLog.save')}
                     </button>
                 </div>
             </div>
@@ -427,30 +405,30 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
                 {/* Левая панель - Настройки */}
                 <div className="space-y-4">
                     <div className="bg-gray-50 p-4 rounded-lg">
-                        <h3 className="font-semibold mb-3">Общие данные</h3>
+                        <h3 className="font-semibold mb-3">{t('geologicalLog.generalData')}</h3>
                         <div className="space-y-3">
                             <div>
-                                <label className="block text-sm font-medium mb-1">Название скважины</label>
+                                <label className="block text-sm font-medium mb-1">{t('geologicalLog.wellName')}</label>
                                 <input
                                     type="text"
                                     value={logData.wellName}
                                     onChange={(e) => setLogData(prev => ({ ...prev, wellName: e.target.value }))}
                                     className="w-full px-3 py-2 border rounded-lg text-sm"
-                                    placeholder="№ 123"
+                                    placeholder={t('geologicalLog.wellNamePlaceholder')}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">Локация</label>
+                                <label className="block text-sm font-medium mb-1">{t('geologicalLog.location')}</label>
                                 <input
                                     type="text"
                                     value={logData.location}
                                     onChange={(e) => setLogData(prev => ({ ...prev, location: e.target.value }))}
                                     className="w-full px-3 py-2 border rounded-lg text-sm"
-                                    placeholder="Координаты"
+                                    placeholder={t('geologicalLog.locationPlaceholder')}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">Высота (м)</label>
+                                <label className="block text-sm font-medium mb-1">{t('geologicalLog.elevation')}</label>
                                 <input
                                     type="number"
                                     value={logData.elevation}
@@ -459,7 +437,7 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-1">Общая глубина (м)</label>
+                                <label className="block text-sm font-medium mb-1">{t('geologicalLog.totalDepth')}</label>
                                 <input
                                     type="number"
                                     value={logData.totalDepth}
@@ -474,18 +452,18 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
                                     onChange={(e) => setShowGrid(e.target.checked)}
                                     className="mr-2"
                                 />
-                                <label className="text-sm">Показать сетку</label>
+                                <label className="text-sm">{t('geologicalLog.showGrid')}</label>
                             </div>
                         </div>
                     </div>
 
                     {/* Добавление слоя */}
                     <div className="bg-blue-50 p-4 rounded-lg">
-                        <h3 className="font-semibold mb-3">Добавить слой</h3>
+                        <h3 className="font-semibold mb-3">{t('geologicalLog.addLayer')}</h3>
                         <div className="space-y-3">
                             <div className="grid grid-cols-2 gap-2">
                                 <div>
-                                    <label className="block text-xs font-medium mb-1">Глубина от (м)</label>
+                                    <label className="block text-xs font-medium mb-1">{t('geologicalLog.depthFrom')}</label>
                                     <input
                                         type="number"
                                         step="0.1"
@@ -495,7 +473,7 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium mb-1">Глубина до (м)</label>
+                                    <label className="block text-xs font-medium mb-1">{t('geologicalLog.depthTo')}</label>
                                     <input
                                         type="number"
                                         step="0.1"
@@ -506,7 +484,7 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-xs font-medium mb-1">Литология</label>
+                                <label className="block text-xs font-medium mb-1">{t('geologicalLog.lithology')}</label>
                                 <select
                                     value={currentLayer.lithology}
                                     onChange={(e) => setCurrentLayer(prev => ({ 
@@ -522,7 +500,7 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-medium mb-1">Размер зерна</label>
+                                <label className="block text-xs font-medium mb-1">{t('geologicalLog.grainSize')}</label>
                                 <select
                                     value={currentLayer.grain_size}
                                     onChange={(e) => setCurrentLayer(prev => ({ ...prev, grain_size: e.target.value }))}
@@ -534,39 +512,39 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-medium mb-1">Описание</label>
+                                <label className="block text-xs font-medium mb-1">{t('geologicalLog.description')}</label>
                                 <textarea
                                     value={currentLayer.description}
                                     onChange={(e) => setCurrentLayer(prev => ({ ...prev, description: e.target.value }))}
                                     className="w-full px-2 py-1 border rounded text-sm"
                                     rows="2"
-                                    placeholder="Характеристика слоя"
+                                    placeholder={t('geologicalLog.descriptionPlaceholder')}
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium mb-1">Ископаемые</label>
+                                <label className="block text-xs font-medium mb-1">{t('geologicalLog.fossils')}</label>
                                 <input
                                     type="text"
                                     value={currentLayer.fossils}
                                     onChange={(e) => setCurrentLayer(prev => ({ ...prev, fossils: e.target.value }))}
                                     className="w-full px-2 py-1 border rounded text-sm"
-                                    placeholder="Если есть"
+                                    placeholder={t('geologicalLog.fossilsPlaceholder')}
                                 />
                             </div>
                             <button
                                 onClick={handleAddLayer}
                                 className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                             >
-                                + Добавить слой
+                                + {t('geologicalLog.addLayerButton')}
                             </button>
                         </div>
                     </div>
 
                     {/* Список слоев */}
                     <div className="bg-gray-50 p-4 rounded-lg max-h-96 overflow-y-auto">
-                        <h3 className="font-semibold mb-3">Слои ({logData.layers.length})</h3>
+                        <h3 className="font-semibold mb-3">{t('geologicalLog.layers')} ({logData.layers.length})</h3>
                         {logData.layers.length === 0 ? (
-                            <p className="text-sm text-gray-500">Нет добавленных слоев</p>
+                            <p className="text-sm text-gray-500">{t('geologicalLog.noLayers')}</p>
                         ) : (
                             <div className="space-y-2">
                                 {logData.layers.map(layer => (
@@ -636,10 +614,10 @@ const GeologicalLogTool = ({ onSave, initialData = null }) => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                     <div>
-                        <p className="font-semibold text-yellow-900 mb-1">⚠️ Важно! Не забудьте сохранить лог</p>
+                        <p className="font-semibold text-yellow-900 mb-1">⚠️ {t('geologicalLog.warningTitle')}</p>
                         <p className="text-sm text-yellow-800">
-                            После создания или редактирования слоев обязательно нажмите кнопку <strong>"💾 Сохранить"</strong> вверху страницы. 
-                            Без сохранения все изменения будут потеряны при закрытии редактора.
+                            {t('geologicalLog.warningText')} <strong>"💾 {t('geologicalLog.warningButton')}"</strong>. 
+                            {' '}{t('geologicalLog.warningFooter')}
                         </p>
                     </div>
                 </div>

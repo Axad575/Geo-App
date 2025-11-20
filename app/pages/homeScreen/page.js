@@ -188,7 +188,7 @@ export default function Home() {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-screen">
-                <div className="text-xl">Loading...</div>
+                <div className="text-xl">{t('loading')}</div>
             </div>
         );
     }

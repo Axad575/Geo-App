@@ -23,6 +23,7 @@ const ProjectPage = ({ projectId, orgId }) => {
             default: return 'en-GB';
         }
     };
+    
     const router = useRouter();
     const [project, setProject] = useState(null);
     const [users, setUsers] = useState({});
@@ -99,25 +100,22 @@ const ProjectPage = ({ projectId, orgId }) => {
         try {
             const locationPoint = {
                 ...locationData,
-                id: Date.now().toString(), // Уникальный ID
+                id: Date.now().toString(),
                 author: auth.currentUser?.uid,
                 authorName: users[auth.currentUser?.uid] || auth.currentUser?.email,
                 createdAt: new Date().toISOString()
             };
 
-            // Добавляем точку в массив locations проекта
             const projectRef = doc(db, `organizations/${orgId}/projects/${projectId}`);
             await updateDoc(projectRef, {
                 locations: arrayUnion(locationPoint)
             });
 
-            // Добавляем в историю
             await addToHistory('location_added', {
                 locationName: locationData.name,
                 coordinates: `${locationData.latitude}, ${locationData.longitude}`
             });
 
-            // Обновляем локальное состояние
             setProject(prev => ({
                 ...prev,
                 locations: [...(prev.locations || []), locationPoint]
@@ -127,22 +125,18 @@ const ProjectPage = ({ projectId, orgId }) => {
         }
     };
 
-    // Обработка клика по карте для добавления новой точки
     const handleMapClick = (latlng) => {
         setSelectedMapLocation(latlng);
         setShowAddLocation(true);
     };
 
-    // Обработка клика по существующей точке на карте
     const handleLocationClick = (location) => {
-        // Можно добавить модальное окно с подробной информацией
         console.log('Location clicked:', location);
     };
 
-    // Получение центра карты на основе существующих точек
     const getMapCenter = () => {
         if (!project.locations || project.locations.length === 0) {
-            return [41.291111, 69.240556]; // Ташкент по умолчанию (41°17'28"N, 69°14'26"E)
+            return [41.291111, 69.240556];
         }
         
         const lats = project.locations.map(loc => Number(loc.latitude));
@@ -154,7 +148,6 @@ const ProjectPage = ({ projectId, orgId }) => {
         ];
     };
 
-    // Функции для работы с координатами в формате DMS
     const decimalToDMS = (decimal, isLatitude = true) => {
         const absolute = Math.abs(decimal);
         const degrees = Math.floor(absolute);
@@ -169,7 +162,6 @@ const ProjectPage = ({ projectId, orgId }) => {
     };
 
     const dmsToDecimal = (dms) => {
-        // Парсинг строки формата "41°17'28"N" или "41 17 28 N"
         const regex = /(\d+)[°\s]+(\d+)['\s]*(\d+)["\s]*([NSEW])/i;
         const match = dms.match(regex);
         
@@ -189,7 +181,7 @@ const ProjectPage = ({ projectId, orgId }) => {
         return decimal;
     };
 
-    // Экспорт проекта в PDF
+    // PDF Export - ОСТАЕТСЯ НА АНГЛИЙСКОМ
     const exportToPDF = async () => {
         try {
             const pdf = new jsPDF('p', 'mm', 'a4');
@@ -198,7 +190,6 @@ const ProjectPage = ({ projectId, orgId }) => {
             const margin = 20;
             let yPosition = margin;
 
-            // Helper function to add section divider
             const addDivider = () => {
                 pdf.setDrawColor(220, 220, 220);
                 pdf.setLineWidth(0.5);
@@ -206,7 +197,6 @@ const ProjectPage = ({ projectId, orgId }) => {
                 yPosition += 8;
             };
 
-            // Helper function to check page break
             const checkPageBreak = (requiredSpace = 40) => {
                 if (yPosition > pageHeight - requiredSpace) {
                     pdf.addPage();
@@ -216,7 +206,7 @@ const ProjectPage = ({ projectId, orgId }) => {
                 return false;
             };
 
-            // Header with background
+            // Header
             pdf.setFillColor(34, 139, 34);
             pdf.rect(0, 0, pageWidth, 45, 'F');
             
@@ -232,7 +222,7 @@ const ProjectPage = ({ projectId, orgId }) => {
             yPosition = 55;
             pdf.setTextColor(0, 0, 0);
 
-            // Project Overview Section
+            // Project Overview
             pdf.setFontSize(16);
             pdf.setFont('helvetica', 'bold');
             pdf.setTextColor(34, 139, 34);
@@ -241,7 +231,6 @@ const ProjectPage = ({ projectId, orgId }) => {
             pdf.setTextColor(0, 0, 0);
             addDivider();
 
-            // Description
             pdf.setFontSize(11);
             pdf.setFont('helvetica', 'bold');
             pdf.text('Description:', margin, yPosition);
@@ -254,7 +243,6 @@ const ProjectPage = ({ projectId, orgId }) => {
             pdf.text(splitDescription, margin, yPosition);
             yPosition += (splitDescription.length * 5) + 8;
 
-            // Project Period
             pdf.setFontSize(11);
             pdf.setFont('helvetica', 'bold');
             pdf.text('Project Period:', margin, yPosition);
@@ -270,7 +258,6 @@ const ProjectPage = ({ projectId, orgId }) => {
             pdf.text(projectPeriod, margin, yPosition);
             yPosition += 10;
 
-            // Status
             pdf.setFontSize(11);
             pdf.setFont('helvetica', 'bold');
             pdf.text('Status:', margin, yPosition);
@@ -281,7 +268,7 @@ const ProjectPage = ({ projectId, orgId }) => {
             pdf.text(project.status || 'Not specified', margin, yPosition);
             yPosition += 12;
 
-            // Participants Section
+            // Participants
             if (project.participants && project.participants.length > 0) {
                 checkPageBreak(50);
                 
@@ -302,7 +289,7 @@ const ProjectPage = ({ projectId, orgId }) => {
                 yPosition += 8;
             }
 
-            // Notes Section
+            // Notes
             if (project.notes && project.notes.length > 0) {
                 checkPageBreak(50);
 
@@ -317,9 +304,8 @@ const ProjectPage = ({ projectId, orgId }) => {
                 project.notes.forEach((note, index) => {
                     checkPageBreak(40);
 
-                    // Calculate content first
                     const titleText = `${index + 1}. ${note.title || note.text}`;
-                    let contentHeight = 7; // Title height
+                    let contentHeight = 7;
                     
                     let splitNote = [];
                     if (note.description) {
@@ -329,24 +315,21 @@ const ProjectPage = ({ projectId, orgId }) => {
                     }
                     
                     if (note.location) {
-                        contentHeight += 5; // Location height
+                        contentHeight += 5;
                     }
                     
-                    contentHeight += 5; // Author line height
-                    contentHeight += 5; // Bottom padding
+                    contentHeight += 5;
+                    contentHeight += 5;
 
-                    // Draw box with calculated height
                     pdf.setFillColor(245, 245, 245);
                     pdf.rect(margin, yPosition - 3, pageWidth - 2 * margin, contentHeight, 'F');
 
-                    // Title
                     pdf.setFontSize(12);
                     pdf.setFont('helvetica', 'bold');
                     pdf.setTextColor(0, 0, 0);
                     pdf.text(titleText, margin + 3, yPosition + 3);
                     yPosition += 7;
 
-                    // Description
                     if (note.description) {
                         pdf.setFontSize(10);
                         pdf.setFont('helvetica', 'normal');
@@ -354,7 +337,6 @@ const ProjectPage = ({ projectId, orgId }) => {
                         yPosition += (splitNote.length * 5);
                     }
 
-                    // Location
                     if (note.location) {
                         pdf.setFontSize(9);
                         pdf.setFont('helvetica', 'italic');
@@ -363,7 +345,6 @@ const ProjectPage = ({ projectId, orgId }) => {
                         yPosition += 5;
                     }
 
-                    // Author
                     pdf.setFontSize(8);
                     pdf.setFont('helvetica', 'normal');
                     pdf.setTextColor(100, 100, 100);
@@ -373,7 +354,7 @@ const ProjectPage = ({ projectId, orgId }) => {
                 });
             }
 
-            // Locations Section
+            // Locations
             if (project.locations && project.locations.length > 0) {
                 checkPageBreak(50);
 
@@ -388,9 +369,8 @@ const ProjectPage = ({ projectId, orgId }) => {
                 project.locations.forEach((location, index) => {
                     checkPageBreak(35);
 
-                    // Calculate content height
                     const titleText = `${index + 1}. ${location.name}`;
-                    let contentHeight = 6; // Title height
+                    let contentHeight = 6;
                     
                     let splitLocation = [];
                     if (location.description) {
@@ -399,22 +379,19 @@ const ProjectPage = ({ projectId, orgId }) => {
                         contentHeight += (splitLocation.length * 5);
                     }
                     
-                    contentHeight += 5; // Coordinates height
-                    contentHeight += 5; // Author line height
-                    contentHeight += 4; // Bottom padding
+                    contentHeight += 5;
+                    contentHeight += 5;
+                    contentHeight += 4;
 
-                    // Draw box with calculated height
                     pdf.setFillColor(250, 250, 250);
                     pdf.rect(margin, yPosition - 3, pageWidth - 2 * margin, contentHeight, 'F');
 
-                    // Title
                     pdf.setFontSize(11);
                     pdf.setFont('helvetica', 'bold');
                     pdf.setTextColor(0, 0, 0);
                     pdf.text(titleText, margin + 3, yPosition + 3);
                     yPosition += 6;
 
-                    // Description
                     if (location.description) {
                         pdf.setFontSize(10);
                         pdf.setFont('helvetica', 'normal');
@@ -422,14 +399,12 @@ const ProjectPage = ({ projectId, orgId }) => {
                         yPosition += (splitLocation.length * 5);
                     }
 
-                    // Coordinates
                     pdf.setFontSize(9);
                     pdf.setFont('helvetica', 'normal');
                     pdf.setTextColor(50, 50, 50);
                     pdf.text(`Coordinates: ${Number(location.latitude).toFixed(6)}, ${Number(location.longitude).toFixed(6)}`, margin + 3, yPosition);
                     yPosition += 5;
 
-                    // Author
                     pdf.setFontSize(8);
                     pdf.setFont('helvetica', 'italic');
                     pdf.setTextColor(100, 100, 100);
@@ -439,7 +414,7 @@ const ProjectPage = ({ projectId, orgId }) => {
                 });
             }
 
-            // Footer on last page
+            // Footer
             const totalPages = pdf.internal.getNumberOfPages();
             for (let i = 1; i <= totalPages; i++) {
                 pdf.setPage(i);
@@ -450,13 +425,12 @@ const ProjectPage = ({ projectId, orgId }) => {
                 pdf.text('Generated by GeoNote © 2025', pageWidth - margin, pageHeight - 10, { align: 'right' });
             }
 
-            // Save file
             const fileName = `${project.title.replace(/[^a-z0-9]/gi, '_')}_report_${new Date().toISOString().split('T')[0]}.pdf`;
             pdf.save(fileName);
 
         } catch (error) {
             console.error('Error generating PDF:', error);
-            alert('Error generating PDF. Please try again.');
+            alert(t('error'));
         }
     };
 
@@ -485,7 +459,7 @@ const ProjectPage = ({ projectId, orgId }) => {
         }
     };
 
-    // Функция для получения иконки действия
+    // Локализованные описания действий
     const getActionIcon = (action) => {
         switch (action) {
             case 'note_added': return '📝';
@@ -493,23 +467,33 @@ const ProjectPage = ({ projectId, orgId }) => {
             case 'project_created': return '🚀';
             case 'status_changed': return '🔄';
             case 'file_uploaded': return '📎';
+            case 'note_updated': return '✏️';
+            case 'note_deleted': return '🗑️';
             default: return '📋';
         }
     };
 
-    // Функция для получения описания действия
     const getActionDescription = (historyItem) => {
+        const noteTitle = historyItem.details?.noteTitle || t('nav.notes');
+        const locationName = historyItem.details?.locationName || t('locations.title');
+        const newStatus = historyItem.details?.newStatus || '';
+        const fileName = historyItem.details?.fileName || '';
+
         switch (historyItem.action) {
             case 'note_added':
-                return `Добавил заметку "${historyItem.details.noteTitle}"`;
+                return `${t('projectPage.addedNote')} "${noteTitle}"`;
+            case 'note_updated':
+                return `${t('projectPage.updatedNote')} "${noteTitle}"`;
+            case 'note_deleted':
+                return `${t('projectPage.deletedNote')} "${noteTitle}"`;
             case 'location_added':
-                return `Добавил точку "${historyItem.details.locationName}"`;
+                return `${t('projectPage.addedLocation')} "${locationName}"`;
             case 'project_created':
-                return 'Создал проект';
+                return t('projectPage.createdProject');
             case 'status_changed':
-                return `Изменил статус на "${historyItem.details.newStatus}"`;
+                return `${t('projectPage.changedStatus')} "${newStatus}"`;
             case 'file_uploaded':
-                return `Загрузил файл "${historyItem.details.fileName}"`;
+                return `${t('projectPage.uploadedFile')} "${fileName}"`;
             default:
                 return historyItem.action;
         }
@@ -529,16 +513,14 @@ const ProjectPage = ({ projectId, orgId }) => {
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-3xl font-bold">{project.title || t('projects.projectTitle')}</h1>
                 <div className="flex gap-3">
-                    {/* НОВАЯ КНОПКА: Задачи */}
                     <button 
                         onClick={() => router.push(`/pages/projects/${projectId}/tasks`)}
                         className="p-2 bg-blue-600 text-white rounded-lg shadow hover:shadow-md hover:bg-blue-700 transition-colors"
-                        title="Управление задачами"
+                        title={t('projectPage.manageTasks')}
                     >
-                        Задачи
+                        {t('projectPage.tasks')}
                     </button>
                     
-                    {/* Export to PDF button */}
                     <button 
                         onClick={exportToPDF}
                         className="p-2 bg-white rounded-lg shadow hover:shadow-md border hover:bg-gray-50 transition-colors"
@@ -564,7 +546,7 @@ const ProjectPage = ({ projectId, orgId }) => {
                 {/* Левая колонка */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Description */}
-                    <div className="bg-white  rounded-lg shadow p-6">
+                    <div className="bg-white rounded-lg shadow p-6">
                         <h2 className="text-xl font-semibold mb-4">{t('projects.description')}</h2>
                         <div className="bg-gray-100 p-4 rounded-lg min-h-[100px]">
                             {project.description || t('projects.noDescription')}
@@ -588,7 +570,7 @@ const ProjectPage = ({ projectId, orgId }) => {
                                         ))}
                                     </div>
                                 ) : (
-                                    'list of members'
+                                    t('projectPage.membersList')
                                 )}
                             </div>
                         </div>
@@ -597,7 +579,7 @@ const ProjectPage = ({ projectId, orgId }) => {
                     {/* Notes */}
                     <div className="bg-white rounded-lg shadow p-6">
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-xl font-semibold">{t('notes.title')}:</h2>
+                            <h2 className="text-xl font-semibold">{t('nav.notes')}:</h2>
                             <button
                                 onClick={() => router.push(`/pages/projects/${projectId}/notes/create`)}
                                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
@@ -622,7 +604,6 @@ const ProjectPage = ({ projectId, orgId }) => {
                                                         </p>
                                                     )}
                                                     
-                                                    {/* Индикаторы */}
                                                     <div className="flex items-center gap-3 mb-3 text-xs text-gray-500">
                                                         {note.location && (
                                                             <div className="flex items-center gap-1">
@@ -647,7 +628,6 @@ const ProjectPage = ({ projectId, orgId }) => {
                                                     </div>
                                                 </div>
 
-                                                {/* Кнопка просмотра */}
                                                 <button
                                                     onClick={() => router.push(`/pages/projects/${projectId}/notes/${note.id}`)}
                                                     className="w-full px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
@@ -656,7 +636,7 @@ const ProjectPage = ({ projectId, orgId }) => {
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                     </svg>
-                                                    Просмотреть
+                                                    {t('projectPage.view')}
                                                 </button>
                                             </div>
                                         </div>
@@ -691,7 +671,6 @@ const ProjectPage = ({ projectId, orgId }) => {
                             />
                         </div>
 
-                        {/* Location Points List */}
                         {project.locations && project.locations.length > 0 && (
                             <div className="mt-4">
                                 <h3 className="text-lg font-medium mb-2">{t('locations.title')}:</h3>
@@ -732,10 +711,10 @@ const ProjectPage = ({ projectId, orgId }) => {
                         <div className="bg-gray-100 p-4 rounded-lg">
                             <p className="text-sm text-gray-700">
                                 {project.startDate && project.endDate
-                                    ? `${formatDate(project.startDate)}-${formatDate(project.endDate)}`
+                                    ? `${formatDate(project.startDate)} - ${formatDate(project.endDate)}`
                                     : project.startDate
                                         ? formatDate(project.startDate)
-                                        : '15.02.2025-15.04.2025'
+                                        : t('projectPage.defaultDate')
                                 }
                             </p>
                         </div>
@@ -751,9 +730,9 @@ const ProjectPage = ({ projectId, orgId }) => {
                         </div>
                     </div>
 
-                    {/* НОВЫЙ БЛОК: История действий */}
+                    {/* History */}
                     <div className="bg-white rounded-lg shadow p-6">
-                        <h3 className="text-lg font-semibold mb-3">История действий</h3>
+                        <h3 className="text-lg font-semibold mb-3">{t('projectPage.actionHistory')}</h3>
                         <div className="bg-gray-100 p-4 rounded-lg max-h-[400px] overflow-y-auto">
                             {project.history && project.history.length > 0 ? (
                                 <div className="space-y-3">
@@ -776,14 +755,13 @@ const ProjectPage = ({ projectId, orgId }) => {
                                                             <span>{formatTime(item.timestamp)}</span>
                                                         </div>
                                                         
-                                                        {/* Дополнительные детали для определенных действий */}
                                                         {item.details && (
                                                             <div className="mt-1 text-xs text-gray-600">
                                                                 {item.action === 'location_added' && (
                                                                     <span>📍 {item.details.coordinates}</span>
                                                                 )}
                                                                 {item.action === 'note_added' && item.details.hasAttachments && (
-                                                                    <span>📎 {item.details.attachmentCount} файла(ов)</span>
+                                                                    <span>📎 {item.details.attachmentCount} {t('projectPage.files')}</span>
                                                                 )}
                                                             </div>
                                                         )}
@@ -795,7 +773,7 @@ const ProjectPage = ({ projectId, orgId }) => {
                                 </div>
                             ) : (
                                 <div className="text-center text-gray-600 text-sm">
-                                    История действий пока пуста
+                                    {t('projectPage.emptyHistory')}
                                 </div>
                             )}
                         </div>
@@ -803,7 +781,6 @@ const ProjectPage = ({ projectId, orgId }) => {
                 </div>
             </div>
 
-            {/* Modals */}
             <AddLocationModal
                 isOpen={showAddLocation}
                 onClose={() => {

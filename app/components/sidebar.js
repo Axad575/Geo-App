@@ -54,7 +54,7 @@ export default function Sidebar() {
       </div>
 
       <div className="p-4 text-xs text-gray-200">
-        <p>Made by abdu1axad</p>
+        <p>Made by abdu1axad and dantajd</p>
         <p>Copyright 2025</p>
       </div>
     </div>

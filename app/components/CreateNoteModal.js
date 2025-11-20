@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useStrings } from "@/app/hooks/useStrings";
 import { uploadNoteFile } from '@/app/utils/fileStorage';
 
-const CreateNoteModal = ({ isOpen, onClose, onSubmit }) => {
+const CreateNoteModal = ({ isOpen, onClose, onSubmit, project, user }) => {
     const { t } = useStrings();
     const [formData, setFormData] = useState({
         title: '',
@@ -31,6 +31,7 @@ const CreateNoteModal = ({ isOpen, onClose, onSubmit }) => {
                 content: '',
                 category: ''
             });
+            setAttachedFiles([]);
         }
     }, [isOpen]);
 
@@ -58,7 +59,7 @@ const CreateNoteModal = ({ isOpen, onClose, onSubmit }) => {
             for (const file of Array.from(files)) {
                 // Проверка размера файла (максимум 10MB)
                 if (file.size > 10 * 1024 * 1024) {
-                    alert(`Файл ${file.name} слишком большой. Максимум 10MB.`);
+                    alert(t('notes.fileTooLarge').replace('{fileName}', file.name));
                     continue;
                 }
                 
@@ -76,10 +77,9 @@ const CreateNoteModal = ({ isOpen, onClose, onSubmit }) => {
             }
             
             setAttachedFiles(prev => [...prev, ...uploadedFiles]);
-            alert(`Загружено файлов: ${uploadedFiles.length}`);
         } catch (error) {
             console.error('File upload error:', error);
-            alert('Ошибка загрузки файлов');
+            alert(t('notes.fileUploadError'));
         } finally {
             setUploadingFiles(false);
         }
@@ -88,6 +88,14 @@ const CreateNoteModal = ({ isOpen, onClose, onSubmit }) => {
     // Функция удаления файла
     const removeFile = (index) => {
         setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+    };
+
+    // Функция для получения иконки файла
+    const getFileIcon = (file) => {
+        if (file.type?.startsWith('image/')) return '🖼️';
+        if (file.type?.includes('pdf')) return '📄';
+        if (file.name?.endsWith('.kml') || file.name?.endsWith('.gpx')) return '🗺️';
+        return '📎';
     };
 
     const handleSubmit = async (e) => {
@@ -103,8 +111,10 @@ const CreateNoteModal = ({ isOpen, onClose, onSubmit }) => {
         if (!formData.content.trim()) {
             alert(t('notes.pleaseEnterContent'));
             return;
-        }        console.log('Calling onSubmit with:', formData);
-        onSubmit(formData);
+        }
+        
+        console.log('Calling onSubmit with:', { ...formData, attachments: attachedFiles });
+        onSubmit({ ...formData, attachments: attachedFiles });
     };
 
     const handleInputChange = (field, value) => {
@@ -126,7 +136,7 @@ const CreateNoteModal = ({ isOpen, onClose, onSubmit }) => {
             }}
         >
             <div 
-                className="bg-white  rounded-lg p-6 w-full max-w-2xl max-h-full overflow-auto my-auto mx-auto shadow-xl"
+                className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-full overflow-auto my-auto mx-auto shadow-xl"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center mb-3">
@@ -206,7 +216,7 @@ const CreateNoteModal = ({ isOpen, onClose, onSubmit }) => {
                         </label>
                         
                         {/* File Drop Zone */}
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors">
                             <input
                                 type="file"
                                 multiple
@@ -222,10 +232,10 @@ const CreateNoteModal = ({ isOpen, onClose, onSubmit }) => {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                     </svg>
                                     <p className="text-sm text-gray-500">
-                                      {uploadingFiles ? 'Загрузка файлов...' : 'Нажмите или перетащите файлы сюда'}
+                                        {uploadingFiles ? t('notes.uploadingFiles') : t('notes.fileDropZone')}
                                     </p>
                                     <p className="text-xs text-gray-400">
-                                      Поддержка: изображения, PDF, документы, геоданные (максимум 10MB)
+                                        {t('notes.fileDropHint')}
                                     </p>
                                 </div>
                             </label>
@@ -233,37 +243,37 @@ const CreateNoteModal = ({ isOpen, onClose, onSubmit }) => {
 
                         {/* Attached Files List */}
                         {attachedFiles.length > 0 && (
-                          <div className="mt-3 space-y-2">
-                            <p className="text-sm font-medium text-gray-700">
-                              Прикрепленные файлы ({attachedFiles.length}):
-                            </p>
-                            {attachedFiles.map((file, index) => (
-                              <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                                <div className="flex items-center space-x-2">
-                                  <span className="text-sm">
-                                    {file.type.startsWith('image/') ? '🖼️' : 
-                                     file.type.includes('pdf') ? '📄' : 
-                                     file.name.endsWith('.kml') ? '🗺️' : '📎'}
-                                  </span>
-                                  <div>
-                                    <p className="text-sm font-medium text-gray-700">
-                                      {file.name}
-                                    </p>
-                                    <p className="text-xs text-gray-500">
-                                      {(file.size / 1024 / 1024).toFixed(2)} MB
-                                    </p>
-                                  </div>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => removeFile(index)}
-                                  className="text-red-500 hover:text-red-700 text-sm"
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                            ))}
-                          </div>
+                            <div className="mt-3 space-y-2">
+                                <p className="text-sm font-medium text-gray-700">
+                                    {t('notes.attachedFiles')} ({attachedFiles.length}):
+                                </p>
+                                {attachedFiles.map((file, index) => (
+                                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors">
+                                        <div className="flex items-center space-x-2">
+                                            <span className="text-sm">
+                                                {getFileIcon(file)}
+                                            </span>
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-700">
+                                                    {file.name}
+                                                </p>
+                                                <p className="text-xs text-gray-500">
+                                                    {(file.size / 1024 / 1024).toFixed(2)} {t('notes.mb')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeFile(index)}
+                                            className="text-red-500 hover:text-red-700 text-sm p-2"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
                         )}
                     </div>
 
@@ -272,16 +282,16 @@ const CreateNoteModal = ({ isOpen, onClose, onSubmit }) => {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-6 py-3 text-sm font-medium text-gray-700 hover:text-gray-900  hover:bg-gray-50 rounded-lg transition-colors"
+                            className="px-6 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
                         >
-                            {t('meetings.cancel')}
+                            {t('cancel')}
                         </button>
                         <button
                             type="submit"
-                            disabled={!formData.title.trim() || !formData.content.trim()}
+                            disabled={!formData.title.trim() || !formData.content.trim() || uploadingFiles}
                             className="px-6 py-3 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
-                            {t('notes.createNote')}
+                            {uploadingFiles ? t('notes.uploadingFiles') : t('notes.createNote')}
                         </button>
                     </div>
                 </form>
