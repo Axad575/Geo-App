@@ -198,14 +198,11 @@ const EnhancedMeetingListItem = ({ meeting, users, onMeetingUpdate }) => {
                 date = new Date(timestamp);
             }
             
-            return date.toLocaleDateString('ru-RU', {
-                weekday: 'short',
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+            const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        
+        return `${day}/${month}/${year}`;
         } catch (error) {
             console.error('Error formatting date:', error);
             return timestamp.toString();

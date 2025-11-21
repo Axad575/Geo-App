@@ -31,13 +31,11 @@ const formatDate = (dateString, t) => {
         const date = new Date(dateString);
         if (isNaN(date.getTime())) return t('tasks.invalidDate');
         
-        const selectedLocale = getCurrentLocale();
+         const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
         
-        return date.toLocaleDateString(selectedLocale, {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric'
-        });
+        return `${day}/${month}/${year}`;
     } catch (error) {
         console.error('Error formatting date:', error);
         return t('tasks.dateError');
