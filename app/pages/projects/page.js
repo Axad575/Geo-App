@@ -497,14 +497,17 @@ export default function Projects() {
         }
     };
 
-    const fetchProjects = async (organizationId, userId) => {
-        try {
-            const orgDoc = await getDoc(doc(db, `organizations/${organizationId}`));
-            const orgName = orgDoc.exists() ? orgDoc.data().name : 'Organization';
-            
-            const querySnapshot = await getDocs(collection(db, `organizations/${organizationId}/projects`));
-            
-            const projectsList = querySnapshot.docs.map(doc => {
+   const fetchProjects = async (organizationId, userId) => {
+    try {
+        const orgDoc = await getDoc(doc(db, `organizations/${organizationId}`));
+        const orgName = orgDoc.exists() ? orgDoc.data().name : 'Organization';
+        
+        const querySnapshot = await getDocs(collection(db, `organizations/${organizationId}/projects`));
+        
+        console.log(`Found ${querySnapshot.docs.length} total projects in organization`);
+        
+        const projectsList = querySnapshot.docs
+            .map(doc => {
                 const data = doc.data();
                 return {
                     id: doc.id,
@@ -513,17 +516,37 @@ export default function Projects() {
                     orgId: organizationId,
                     currentUserId: userId
                 };
+            })
+            .filter(project => {
+                // Показываем проекты где пользователь:
+                // 1. Является создателем
+                const isCreator = project.createdBy === userId || project.owner === userId;
+                
+                // 2. Есть в списке участников
+                const isParticipant = project.participants?.includes(userId) || 
+                                    project.members?.includes(userId);
+                
+                console.log(`Project "${project.title}": isCreator=${isCreator}, isParticipant=${isParticipant}`);
+                
+                return isCreator || isParticipant;
+            })
+            .sort((a, b) => {
+                // Сортировка: активные проекты первыми, потом по дате создания
+                if (a.status === 'in progress' && b.status !== 'in progress') return -1;
+                if (a.status !== 'in progress' && b.status === 'in progress') return 1;
+                
+                return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
             });
-            
-            projectsList.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-            
-            setProjects(projectsList);
-        } catch (error) {
-            console.error('Error fetching projects:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+        
+        console.log(`Filtered ${projectsList.length} projects for user ${userId}`);
+        
+        setProjects(projectsList);
+    } catch (error) {
+        console.error('Error fetching projects:', error);
+    } finally {
+        setLoading(false);
+    }
+};
 
     const handleCreateProject = async (projectData) => {
         try {

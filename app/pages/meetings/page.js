@@ -512,14 +512,15 @@ export default function Meetings() {
         }
     };
 
-    const fetchMeetings = async (organizationId, userId) => {
-        try {
-            const meetingsRef = collection(db, `organizations/${organizationId}/meetings`);
-            const querySnapshot = await getDocs(meetingsRef);
-            
-            console.log(`Found ${querySnapshot.docs.length} meetings in organization`);
-            
-            const meetingsList = querySnapshot.docs.map(doc => {
+   const fetchMeetings = async (organizationId, userId) => {
+    try {
+        const meetingsRef = collection(db, `organizations/${organizationId}/meetings`);
+        const querySnapshot = await getDocs(meetingsRef);
+        
+        console.log(`Found ${querySnapshot.docs.length} total meetings in organization`);
+        
+        const meetingsList = querySnapshot.docs
+            .map(doc => {
                 const data = doc.data();
                 console.log('Meeting data:', doc.id, data);
                 return {
@@ -527,21 +528,33 @@ export default function Meetings() {
                     orgId: organizationId,
                     ...data
                 };
-            });
-            
-            meetingsList.sort((a, b) => {
+            })
+            .filter(meeting => {
+                // Показываем встречи где пользователь:
+                // 1. Является организатором (owner/createdBy)
+                const isOwner = meeting.owner === userId || meeting.createdBy === userId;
+                
+                // 2. Есть в списке участников (participants)
+                const isParticipant = meeting.participants?.includes(userId);
+                
+                console.log(`Meeting "${meeting.title}": isOwner=${isOwner}, isParticipant=${isParticipant}`);
+                
+                return isOwner || isParticipant;
+            })
+            .sort((a, b) => {
                 const dateA = new Date(a.date?.seconds ? a.date.seconds * 1000 : a.date || 0);
                 const dateB = new Date(b.date?.seconds ? b.date.seconds * 1000 : b.date || 0);
                 return dateB - dateA;
             });
-            
-            setMeetings(meetingsList);
-        } catch (error) {
-            console.error('Error fetching meetings:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+        
+        console.log(`Filtered ${meetingsList.length} meetings for user ${userId}`);
+        setMeetings(meetingsList);
+    } catch (error) {
+        console.error('Error fetching meetings:', error);
+    } finally {
+        setLoading(false);
+    }
+};
 
     const handleMeetingUpdate = async (meetingId, updateData) => {
         try {

@@ -98,22 +98,37 @@ export default function Home() {
             
             console.log(`Found ${projectsSnapshot.docs.length} projects in organization`);
             
-            const projectsList = projectsSnapshot.docs.map(doc => {
-                const data = doc.data();
-                console.log('Project data:', doc.id, data);
-                return {
-                    id: doc.id,
-                    ...data,
-                    organization: organizationName, // Добавляем название организации
-                    ownerName: usersMap[data.createdBy || data.owner] || data.createdBy || data.owner,
-                    participantsNames: data.members?.map(id => usersMap[id] || id) || []
-                };
-            });
+            const projectsList = projectsSnapshot.docs
+                .map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: doc.id,
+                        ...data,
+                        organization: organizationName,
+                        ownerName: usersMap[data.createdBy || data.owner] || data.createdBy || data.owner,
+                        participantsNames: data.participants?.map(id => usersMap[id] || id) || []
+                    };
+                })
+                .filter(project => {
+                    // Показываем проекты где пользователь является участником
+                    const isOwner = project.createdBy === userId || project.owner === userId;
+                    const isParticipant = project.participants?.includes(userId) || 
+                                        project.members?.includes(userId);
+                    
+                    console.log(`Project ${project.id}: isOwner=${isOwner}, isParticipant=${isParticipant}`);
+                    return isOwner || isParticipant;
+                })
+                .sort((a, b) => {
+                    // Сортировка: активные проекты первыми, потом по дате создания
+                    if (a.status === 'in progress' && b.status !== 'in progress') return -1;
+                    if (a.status !== 'in progress' && b.status === 'in progress') return 1;
+                    
+                    const dateA = new Date(a.createdAt || 0);
+                    const dateB = new Date(b.createdAt || 0);
+                    return dateB - dateA; // Новые проекты первыми
+                });
             
-            console.log(`Total projects: ${projectsList.length}`);
-            console.log('Current user ID:', userId);
-            
-            // Показываем все проекты без фильтрации (временно для отладки)
+            console.log(`Filtered projects for user ${userId}: ${projectsList.length}`);
             setProjects(projectsList);
 
             // Fetch meetings
@@ -122,20 +137,32 @@ export default function Home() {
             
             console.log(`Found ${meetingsSnapshot.docs.length} meetings in organization`);
             
-            const meetingsList = meetingsSnapshot.docs.map(doc => {
-                const data = doc.data();
-                console.log('Meeting data:', doc.id, data);
-                return {
-                    id: doc.id,
-                    ...data,
-                    ownerName: usersMap[data.owner] || data.owner,
-                    participantsNames: data.participants?.map(id => usersMap[id] || id) || []
-                };
-            });
+            const meetingsList = meetingsSnapshot.docs
+                .map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: doc.id,
+                        ...data,
+                        ownerName: usersMap[data.owner] || data.owner,
+                        participantsNames: data.participants?.map(id => usersMap[id] || id) || []
+                    };
+                })
+                .filter(meeting => {
+                    // Показываем встречи где пользователь является участником
+                    const isOwner = meeting.owner === userId;
+                    const isParticipant = meeting.participants?.includes(userId);
+                    
+                    console.log(`Meeting ${meeting.id}: isOwner=${isOwner}, isParticipant=${isParticipant}`);
+                    return isOwner || isParticipant;
+                })
+                .sort((a, b) => {
+                    // Сортировка по дате и времени встречи
+                    const dateTimeA = new Date(`${a.date} ${a.time || '00:00'}`);
+                    const dateTimeB = new Date(`${b.date} ${b.time || '00:00'}`);
+                    return dateTimeA - dateTimeB; // Ближайшие встречи первыми
+                });
             
-            console.log(`Total meetings: ${meetingsList.length}`);
-            
-            // Показываем все встречи без фильтрации (временно для отладки)
+            console.log(`Filtered meetings for user ${userId}: ${meetingsList.length}`);
             setMeetings(meetingsList);
         } catch (error) {
             console.error('Error fetching data:', error);
