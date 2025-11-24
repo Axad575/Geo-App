@@ -26,7 +26,8 @@ const strings = {
             meetings: "Встречи",
             notes: "Заметки",
             settings: "Настройки",
-            home: "Главная"
+            home: "Главная",
+            tickets: "Предложения",
         },
         
         // Навигация
@@ -181,6 +182,53 @@ const strings = {
         logout: "Выйти из системы",
         yourOrganization: "Вашей организации",
         footer: "GeoNote © 2025 • Made by abdu1axad"
+    },
+
+        tickets: {
+        title: "Предложения и Обратная связь",
+        subtitle: "Отправьте свое предложение или сообщите о проблеме",
+        createTicket: "Создать тикет",
+        newTicket: "Новое предложение",
+        ticketTitle: "Название",
+        enterTitle: "Введите название",
+        type: "Тип",
+        priority: "Приоритет",
+        description: "Описание",
+        enterDescription: "Опишите ваше предложение или проблему подробно...",
+        submit: "Отправить",
+        submitting: "Отправка...",
+        myTickets: "Мои тикеты",
+        allTickets: "Все тикеты",
+        noTickets: "Нет тикетов",
+        noTicketsDescription: "Создайте первый тикет, нажав на кнопку выше",
+        delete: "Удалить",
+        
+        // Types
+        suggestion: "Предложение",
+        bug: "Ошибка",
+        feature: "Новая функция",
+        question: "Вопрос",
+        other: "Другое",
+        
+        // Priority
+        lowPriority: "Низкий",
+        mediumPriority: "Средний",
+        highPriority: "Высокий",
+        criticalPriority: "Критический",
+        
+        // Status
+        pending: "Ожидает",
+        inProgress: "В работе",
+        resolved: "Решено",
+        rejected: "Отклонено",
+        
+        // Messages
+        fillAllFields: "Пожалуйста, заполните все обязательные поля",
+        ticketSubmitted: "Тикет успешно отправлен!",
+        submitError: "Ошибка при отправке тикета",
+        confirmDelete: "Вы уверены, что хотите удалить этот тикет?",
+        ticketDeleted: "Тикет удален",
+        deleteError: "Ошибка при удалении тикета"
     },
 
         projectPage: {
@@ -1040,7 +1088,8 @@ const strings = {
             meetings: "Meetings",
             notes: "Notes",
             settings: "Settings",
-            home: "Home"
+            home: "Home",
+            tickets: "Support"
         },
         
         // Home page
@@ -1660,6 +1709,53 @@ const strings = {
             lat: "lat",
             lng: "lng"
         },
+
+        tickets: {
+        title: "Suggestions and Feedback",
+        subtitle: "Submit your suggestion or report an issue",
+        createTicket: "Create Ticket",
+        newTicket: "New Suggestion",
+        ticketTitle: "Title",
+        enterTitle: "Enter title",
+        type: "Type",
+        priority: "Priority",
+        description: "Description",
+        enterDescription: "Describe your suggestion or issue in detail...",
+        submit: "Submit",
+        submitting: "Submitting...",
+        myTickets: "My Tickets",
+        allTickets: "All Tickets",
+        noTickets: "No Tickets",
+        noTicketsDescription: "Create your first ticket by clicking the button above",
+        delete: "Delete",
+        
+        // Types
+        suggestion: "Suggestion",
+        bug: "Bug",
+        feature: "Feature Request",
+        question: "Question",
+        other: "Other",
+        
+        // Priority
+        lowPriority: "Low",
+        mediumPriority: "Medium",
+        highPriority: "High",
+        criticalPriority: "Critical",
+        
+        // Status
+        pending: "Pending",
+        inProgress: "In Progress",
+        resolved: "Resolved",
+        rejected: "Rejected",
+        
+        // Messages
+        fillAllFields: "Please fill in all required fields",
+        ticketSubmitted: "Ticket submitted successfully!",
+        submitError: "Error submitting ticket",
+        confirmDelete: "Are you sure you want to delete this ticket?",
+        ticketDeleted: "Ticket deleted",
+        deleteError: "Error deleting ticket"
+    },
         
         // Местоположения
         location: {
@@ -1773,6 +1869,9 @@ const strings = {
             registerSuccess: "Registration successful"
         },
         
+        
+
+
         // Forms and validation
         forms: {
             required: "Required field",
@@ -1980,7 +2079,8 @@ const strings = {
             meetings: "Uchrashuvlar",
             notes: "Eslatmalar",
             settings: "Sozlamalar",
-            home: "Bosh sahifa"
+            home: "Bosh sahifa",
+            tickets: "Yordam so'rovlari"
         },
         
         // Bosh sahifa
@@ -2616,6 +2716,54 @@ const strings = {
             locationSaved: "Joylashuv saqlandi!",
             fillRequiredFields: "Majburiy maydonlarni to'ldiring"
         },
+
+
+        tickets: {
+        title: "Takliflar va Fikr-mulohazalar",
+        subtitle: "Taklifingizni yuboring yoki muammo haqida xabar bering",
+        createTicket: "Tiket Yaratish",
+        newTicket: "Yangi Taklif",
+        ticketTitle: "Sarlavha",
+        enterTitle: "Sarlavhani kiriting",
+        type: "Turi",
+        priority: "Muhimlik",
+        description: "Tavsif",
+        enterDescription: "Taklifingiz yoki muammoni batafsil tasvirlab bering...",
+        submit: "Yuborish",
+        submitting: "Yuborilmoqda...",
+        myTickets: "Mening Tiketlarim",
+        allTickets: "Barcha Tiketlar",
+        noTickets: "Tiketlar yo'q",
+        noTicketsDescription: "Yuqoridagi tugmani bosib birinchi tiketni yarating",
+        delete: "O'chirish",
+        
+        // Types
+        suggestion: "Taklif",
+        bug: "Xato",
+        feature: "Yangi Funksiya",
+        question: "Savol",
+        other: "Boshqa",
+        
+        // Priority
+        lowPriority: "Past",
+        mediumPriority: "O'rta",
+        highPriority: "Yuqori",
+        criticalPriority: "Kritik",
+        
+        // Status
+        pending: "Kutilmoqda",
+        inProgress: "Jarayonda",
+        resolved: "Hal qilindi",
+        rejected: "Rad etildi",
+        
+        // Messages
+        fillAllFields: "Iltimos, barcha majburiy maydonlarni to'ldiring",
+        ticketSubmitted: "Tiket muvaffaqiyatli yuborildi!",
+        submitError: "Tiketni yuborishda xato",
+        confirmDelete: "Haqiqatan ham bu tiketni o'chirmoqchimisiz?",
+        ticketDeleted: "Tiket o'chirildi",
+        deleteError: "Tiketni o'chirishda xato"
+    },
         
         // Sozlamalar
         settings: {

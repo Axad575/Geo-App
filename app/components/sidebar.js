@@ -30,6 +30,12 @@ export default function Sidebar() {
         router.push("/pages/notes");
     };
 
+    const ticketsBtn = (e) => {
+        e.preventDefault();
+        console.log("Tickets button clicked");
+        router.push("/pages/tickets");
+    }
+
 
   return (
     <div className="sticky top-2 w-56 h-screen bg-green-800 text-white flex flex-col justify-between rounded-lg shadow-lg m-2 shrink-0 z-10">
@@ -54,6 +60,11 @@ export default function Sidebar() {
       </div>
 
       <div className="p-4 text-xs text-gray-200">
+        <div className="flex flex-col space-y-4 mt-4 px-4 mb-4">
+          <button onClick={ticketsBtn} className="bg-green-400 text-black py-2 rounded-md hover:bg-green-300 transition">
+          {t('nav.tickets')}
+          </button>
+        </div>
         <p>Made by abdu1axad and dantajd</p>
         <p>Copyright 2025</p>
       </div>
