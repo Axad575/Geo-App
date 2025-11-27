@@ -1,108 +1,107 @@
 export const generateCalendarLinks = (meeting) => {
-    const title = encodeURIComponent(meeting.title || 'Meeting');
-    const description = encodeURIComponent(meeting.description || meeting.notes || '');
-    const location = encodeURIComponent(meeting.location || '');
-    
-    // Исправляем обработку даты
-    let startDate;
-    try {
-        // Проверяем, является ли meeting.date валидной датой
-        if (!meeting.date) {
-            throw new Error('No date provided');
+    // Форматирование даты для календарей
+    const formatDateForCalendar = (dateString, timeString = '00:00') => {
+        try {
+            const date = new Date(dateString);
+            const [hours, minutes] = timeString.split(':');
+            date.setHours(parseInt(hours) || 0, parseInt(minutes) || 0, 0, 0);
+            return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        } catch (error) {
+            console.error('Error formatting date:', error);
+            const now = new Date();
+            return now.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
         }
-        
-        // Создаем дату с проверкой
-        startDate = new Date(meeting.date);
-        
-        // Проверяем, является ли дата валидной
-        if (isNaN(startDate.getTime())) {
-            throw new Error('Invalid date');
-        }
-    } catch (error) {
-        console.error('Invalid date in meeting:', meeting.date);
-        // Используем текущую дату как fallback
-        startDate = new Date();
-    }
-    
-    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // +1 час по умолчанию
-    
-    const formatDate = (date) => {
-        // Добавляем проверку валидности даты
-        if (!date || isNaN(date.getTime())) {
-            return new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-        }
-        return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
     };
-    
-    const startFormatted = formatDate(startDate);
-    const endFormatted = formatDate(endDate);
-    
-    return {
-        google: `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startFormatted}/${endFormatted}&details=${description}&location=${location}`,
-        
-        outlook: `https://outlook.live.com/calendar/0/deeplink/compose?subject=${title}&startdt=${startFormatted}&enddt=${endFormatted}&body=${description}&location=${location}`,
-        
-        // Для Apple Calendar и других - генерируем ICS файл
-        ics: generateICSFile(meeting, startDate, endDate)
-    };
-};
 
-export const generateICSFile = (meeting, startDate, endDate) => {
-    const formatICSDate = (date) => {
-        // Добавляем проверку валидности даты
-        if (!date || isNaN(date.getTime())) {
-            return new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-        }
-        return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    const startDateTime = formatDateForCalendar(meeting.date, meeting.time || '00:00');
+    
+    // Добавляем 1 час для времени окончания
+    const endDate = new Date(meeting.date);
+    const [hours, minutes] = (meeting.time || '00:00').split(':');
+    endDate.setHours(parseInt(hours) + 1 || 1, parseInt(minutes) || 0, 0, 0);
+    const endDateTime = endDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+    // Формируем описание
+    let description = meeting.description || 'Team meeting';
+    if (meeting.conferenceUrl) {
+        description += `\n\nСсылка на конференцию: ${meeting.conferenceUrl}`;
+    }
+
+    // Google Calendar
+    const googleCalendarUrl = new URL('https://calendar.google.com/calendar/render');
+    googleCalendarUrl.searchParams.append('action', 'TEMPLATE');
+    googleCalendarUrl.searchParams.append('text', meeting.title);
+    googleCalendarUrl.searchParams.append('dates', `${startDateTime}/${endDateTime}`);
+    googleCalendarUrl.searchParams.append('details', description);
+    googleCalendarUrl.searchParams.append('location', meeting.location || 'Online');
+
+    // Outlook Calendar
+    const outlookCalendarUrl = new URL('https://outlook.live.com/calendar/0/deeplink/compose');
+    outlookCalendarUrl.searchParams.append('subject', meeting.title);
+    outlookCalendarUrl.searchParams.append('body', description);
+    outlookCalendarUrl.searchParams.append('startdt', startDateTime);
+    outlookCalendarUrl.searchParams.append('enddt', endDateTime);
+    outlookCalendarUrl.searchParams.append('location', meeting.location || 'Online');
+
+    return {
+        google: googleCalendarUrl.toString(),
+        outlook: outlookCalendarUrl.toString()
     };
-    
-    // Проверяем валидность дат
-    const validStartDate = startDate && !isNaN(startDate.getTime()) ? startDate : new Date();
-    const validEndDate = endDate && !isNaN(endDate.getTime()) ? endDate : new Date(validStartDate.getTime() + 60 * 60 * 1000);
-    
-    const icsContent = `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//GeoNote//EN
-BEGIN:VEVENT
-UID:${meeting.id || 'meeting'}@geonote.app
-DTSTAMP:${formatICSDate(new Date())}
-DTSTART:${formatICSDate(validStartDate)}
-DTEND:${formatICSDate(validEndDate)}
-SUMMARY:${meeting.title || 'Meeting'}
-DESCRIPTION:${meeting.description || meeting.notes || ''}
-LOCATION:${meeting.location || ''}
-END:VEVENT
-END:VCALENDAR`;
-    
-    return `data:text/calendar;charset=utf8,${encodeURIComponent(icsContent)}`;
 };
 
 export const downloadICSFile = (meeting) => {
     try {
-        let startDate;
+        const formatDateForICS = (dateString, timeString = '00:00') => {
+            const date = new Date(dateString);
+            const [hours, minutes] = timeString.split(':');
+            date.setHours(parseInt(hours) || 0, parseInt(minutes) || 0, 0, 0);
+            return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        };
+
+        const startDateTime = formatDateForICS(meeting.date, meeting.time || '00:00');
         
-        // Проверяем и создаем валидную дату
-        if (!meeting.date) {
-            startDate = new Date();
-        } else {
-            startDate = new Date(meeting.date);
-            if (isNaN(startDate.getTime())) {
-                startDate = new Date();
-            }
+        const endDate = new Date(meeting.date);
+        const [hours, minutes] = (meeting.time || '00:00').split(':');
+        endDate.setHours(parseInt(hours) + 1 || 1, parseInt(minutes) || 0, 0, 0);
+        const endDateTime = endDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+        let description = meeting.description || 'Team meeting';
+        if (meeting.conferenceUrl) {
+            description += `\\nСсылка на конференцию: ${meeting.conferenceUrl}`;
         }
-        
-        const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
-        
-        const icsContent = generateICSFile(meeting, startDate, endDate);
-        
+
+        const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//GeoNote//Meetings//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:${meeting.id}@geonote.app
+DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z
+DTSTART:${startDateTime}
+DTEND:${endDateTime}
+SUMMARY:${meeting.title}
+DESCRIPTION:${description.replace(/\n/g, '\\n')}
+LOCATION:${meeting.location || 'Online'}
+STATUS:CONFIRMED
+SEQUENCE:0
+BEGIN:VALARM
+TRIGGER:-PT15M
+ACTION:DISPLAY
+DESCRIPTION:Напоминание: ${meeting.title}
+END:VALARM
+END:VEVENT
+END:VCALENDAR`;
+
+        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
         const link = document.createElement('a');
-        link.href = icsContent;
-        link.download = `${(meeting.title || 'meeting').replace(/[^a-zA-Z0-9]/g, '_')}.ics`;
+        link.href = window.URL.createObjectURL(blob);
+        link.download = `meeting-${meeting.id}.ics`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     } catch (error) {
-        console.error('Error downloading ICS file:', error);
-        alert('Ошибка при создании календарного файла');
+        console.error('Error creating ICS file:', error);
+        throw error;
     }
 };

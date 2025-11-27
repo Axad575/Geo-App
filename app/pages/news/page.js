@@ -331,9 +331,9 @@ export default function News() {
     return (
         <div className="flex h-screen bg-gray-50">
             <Sidebar orgId={orgId} />
-            <div className="flex-1">
+            <div className="flex-1 flex flex-col">
                 <Navbar orgId={orgId} />
-                <div className="p-8">
+                <div className="flex-1 p-8 overflow-auto">
                     <div className="mb-6">
                         <div className="flex justify-between items-center mb-4">
                             <h1 className="text-2xl font-bold text-gray-900">{t('news.organizationNews')}</h1>

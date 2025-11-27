@@ -10,6 +10,7 @@ import CreateMeetingModal from "@/app/components/CreateMeetingModal";
 import MeetingListItem from "@/app/components/MeetingListItem";
 import ParticipantSelector from "@/app/components/participantSelector";
 import { useStrings } from "@/app/hooks/useStrings";
+import CalendarDropdown from "@/app/components/CalendarDropdown";
 
 // Функция для генерации ссылки на конференцию
 const generateConferenceUrl = (meetingTitle, orgId, meetingId) => {
@@ -194,50 +195,54 @@ const EnhancedMeetingListItem = ({ meeting, users, onMeetingUpdate }) => {
             let date;
             if (timestamp.seconds) {
                 date = new Date(timestamp.seconds * 1000);
-            } else {
+            } else if (typeof timestamp === 'string' || timestamp instanceof String) {
                 date = new Date(timestamp);
+            } else {
+                date = timestamp;
             }
             
+            if (isNaN(date.getTime())) return '';
+            
             const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        
-        return `${day}/${month}/${year}`;
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            
+            return `${day}/${month}/${year}`;
         } catch (error) {
             console.error('Error formatting date:', error);
-            return timestamp.toString();
+            return '';
         }
     };
 
     const getStatusColor = (status) => {
         switch (status?.toLowerCase()) {
             case 'completed':
-                return 'bg-green-100 text-green-800 border-green-200';
+                return 'bg-green-100 text-green-800';
             case 'in_progress':
-                return 'bg-blue-100 text-blue-800 border-blue-200';
+                return 'bg-blue-100 text-blue-800';
             case 'scheduled':
             case 'upcoming':
             case null:
             case undefined:
-                return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                return 'bg-yellow-100 text-yellow-800';
             case 'cancelled':
-                return 'bg-red-100 text-red-800 border-red-200';
+                return 'bg-red-100 text-red-800';
             default:
-                return 'bg-gray-100 text-gray-800 border-gray-200';
+                return 'bg-gray-100 text-gray-800';
         }
     };
 
     const getStatusText = (status) => {
         switch (status?.toLowerCase()) {
-            case 'completed': return t('meetings.meetingCompleted');
-            case 'in_progress': return t('meetings.meetingInProgress');
+            case 'completed': return t('meetings.completed');
+            case 'in_progress': return t('meetings.inProgress');
             case 'scheduled':
             case 'upcoming':
             case null:
             case undefined:
-                return t('meetings.meetingScheduled');
-            case 'cancelled': return t('meetings.meetingCancelled');
-            default: return t('meetings.meetingScheduled');
+                return t('meetings.scheduled');
+            case 'cancelled': return t('meetings.cancelled');
+            default: return t('meetings.scheduled');
         }
     };
 
@@ -250,19 +255,17 @@ const EnhancedMeetingListItem = ({ meeting, users, onMeetingUpdate }) => {
     };
 
     const handleMarkCompleted = async () => {
-        if (window.confirm(t('meetings.markAsCompleted'))) {
-            setIsUpdating(true);
-            try {
-                await onMeetingUpdate(meeting.id, {
-                    status: 'completed',
-                    completedAt: new Date().toISOString()
-                });
-            } catch (error) {
-                console.error('Error marking meeting as completed:', error);
-                alert(t('meetings.errorUpdating'));
-            } finally {
-                setIsUpdating(false);
-            }
+        setIsUpdating(true);
+        try {
+            await onMeetingUpdate(meeting.id, {
+                status: 'completed',
+                completedAt: new Date().toISOString()
+            });
+        } catch (error) {
+            console.error('Error marking meeting as completed:', error);
+            alert(t('meetings.errorUpdating'));
+        } finally {
+            setIsUpdating(false);
         }
     };
 
@@ -321,69 +324,104 @@ const EnhancedMeetingListItem = ({ meeting, users, onMeetingUpdate }) => {
 
     return (
         <div className="bg-white border border-gray-200 rounded-lg p-6 mb-4 hover:shadow-md transition-shadow">
+            {/* Header with title, status and calendar button */}
             <div className="flex justify-between items-start mb-4">
-                <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">{meeting.title}</h3>
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(meeting.status)}`}>
-                            {getStatusText(meeting.status)}
+                <div className="flex items-center gap-3">
+                    <h3 className="text-xl font-semibold text-gray-900">{meeting.title}</h3>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(meeting.status)}`}>
+                        {getStatusText(meeting.status)}
+                    </span>
+                    {meeting.conferenceUrl && (
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            {t('meetings.videoConference')}
                         </span>
-                        {meeting.type === 'instant' && (
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                {t('meetings.instant')}
-                            </span>
-                        )}
-                        {meeting.conferenceUrl && (
-                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                {t('meetings.videoConference')}
-                            </span>
-                        )}
-                    </div>
-                    
-                    {meeting.description && (
-                        <p className="text-gray-600 mb-3">{meeting.description}</p>
                     )}
-                    
-                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-500">
-                        <div>
-                            <span className="font-medium">{t('meetings.meetingDate')}:</span> {formatDate(meeting.date)}
-                        </div>
-                        {meeting.location && (
-                            <div>
-                                <span className="font-medium">{t('meetings.location')}:</span> {meeting.location}
-                            </div>
-                        )}
-                        {meeting.completedAt && (
-                            <div>
-                                <span className="font-medium">{t('meetings.finishedAt')}:</span> {formatDate(meeting.completedAt)}
-                            </div>
-                        )}
-                        {meeting.startedAt && (
-                            <div>
-                                <span className="font-medium">{t('meetings.startedAt')}:</span> {formatDate(meeting.startedAt)}
-                            </div>
-                        )}
-                    </div>
+                </div>
+                
+                {/* Calendar button - top right */}
+                {(isScheduled || isInProgress) && (
+                    <CalendarDropdown meeting={{
+                        ...meeting,
+                        date: meeting.datetime || new Date().toISOString()
+                    }} />
+                )}
+            </div>
 
-                    {meeting.participants && meeting.participants.length > 0 && (
-                        <div className="mt-3">
-                            <span className="text-sm font-medium text-gray-700">{t('meetings.participants')}: </span>
-                            <div className="flex flex-wrap gap-2 mt-1">
-                                {meeting.participants.map((participantId) => (
-                                    <span 
-                                        key={participantId}
-                                        className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
-                                    >
-                                        {users[participantId] || participantId}
-                                    </span>
-                                ))}
-                            </div>
+            {/* Meeting info */}
+            <div className="mb-4">
+                <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                    <div className="text-gray-600">
+                        <span className="font-medium">{t('meetings.meetingDate')}:</span>{' '}
+                        {formatDate(meeting.datetime) || t('meetings.noDate')}
+                        {meeting.time && ` ${meeting.time}`}
+                    </div>
+                    {meeting.location && (
+                        <div className="text-gray-600">
+                            <span className="font-medium">{t('meetings.location')}:</span> {meeting.location}
+                        </div>
+                    )}
+                    {meeting.completedAt && (
+                        <div className="text-gray-600">
+                            <span className="font-medium">{t('meetings.finishedAt')}:</span> {formatDate(meeting.completedAt)}
+                        </div>
+                    )}
+                    {meeting.startedAt && (
+                        <div className="text-gray-600">
+                            <span className="font-medium">{t('meetings.startedAt')}:</span> {formatDate(meeting.startedAt)}
                         </div>
                     )}
                 </div>
 
-                <div className="flex flex-col gap-2 ml-4">
-                    {(isInProgress || (isScheduled && meeting.conferenceUrl)) && meeting.conferenceUrl && (
+                {/* Participants */}
+                {meeting.participants && meeting.participants.length > 0 && (
+                    <div className="mt-3">
+                        <span className="text-sm font-medium text-gray-700">{t('meetings.participants')}: </span>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                            {meeting.participants.map((participantId) => (
+                                <span 
+                                    key={participantId}
+                                    className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
+                                >
+                                    {users[participantId] || participantId}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Action buttons - horizontal at bottom */}
+            {isCompleted ? (
+                <div className="flex items-center text-green-600 text-sm font-medium">
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    {t('meetings.completed')}
+                </div>
+            ) : isCancelled ? (
+                <div className="flex items-center text-red-600 text-sm font-medium">
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    {t('meetings.cancelled')}
+                </div>
+            ) : (
+                <div className="flex gap-3">
+                    {/* Start/Join Button */}
+                    {isScheduled && (
+                        <button
+                            onClick={handleStartMeeting}
+                            disabled={isUpdating}
+                            className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-1"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            {isUpdating ? '...' : t('meetings.start')}
+                        </button>
+                    )}
+
+                    {isInProgress && meeting.conferenceUrl && (
                         <button
                             onClick={handleJoinConference}
                             className="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-1"
@@ -391,77 +429,32 @@ const EnhancedMeetingListItem = ({ meeting, users, onMeetingUpdate }) => {
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
-                            {t('meetings.joinConference')}
+                            {t('meetings.join')}
                         </button>
                     )}
 
-                    {isCompleted ? (
-                        <div className="flex items-center text-green-600 text-sm">
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                            {t('meetings.completed')}
-                        </div>
-                    ) : isCancelled ? (
-                        <div className="flex items-center text-red-600 text-sm">
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                            {t('meetings.cancelled')}
-                        </div>
-                    ) : isInProgress ? (
-                        <div className="flex flex-col gap-2">
-                            <button
-                                onClick={handleMarkCompleted}
-                                disabled={isUpdating}
-                                className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center gap-1"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                </svg>
-                                {isUpdating ? '...' : t('meetings.finish')}
-                            </button>
-                            <button
-                                onClick={handleCancelMeeting}
-                                disabled={isUpdating}
-                                className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
-                            >
-                                {isUpdating ? '...' : t('meetings.cancel')}
-                            </button>
-                        </div>
-                    ) : isScheduled ? (
-                        <div className="flex flex-col gap-2">
-                            <button
-                                onClick={handleStartMeeting}
-                                disabled={isUpdating}
-                                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-1"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                                {isUpdating ? '...' : t('meetings.start')}
-                            </button>
-                            <button
-                                onClick={handleMarkCompleted}
-                                disabled={isUpdating}
-                                className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center gap-1"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                </svg>
-                                {isUpdating ? '...' : t('meetings.conducted')}
-                            </button>
-                            <button
-                                onClick={handleCancelMeeting}
-                                disabled={isUpdating}
-                                className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
-                            >
-                                {isUpdating ? '...' : t('meetings.cancel')}
-                            </button>
-                        </div>
-                    ) : null}
+                    {/* Conducted Button */}
+                    <button
+                        onClick={handleMarkCompleted}
+                        disabled={isUpdating}
+                        className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center gap-1"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        {isUpdating ? '...' : t('meetings.conducted')}
+                    </button>
+
+                    {/* Cancel Button */}
+                    <button
+                        onClick={handleCancelMeeting}
+                        disabled={isUpdating}
+                        className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+                    >
+                        {isUpdating ? '...' : t('meetings.cancel')}
+                    </button>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
@@ -668,9 +661,9 @@ export default function Meetings() {
     return (
         <div className="flex h-screen bg-gray-50">
             <Sidebar orgId={orgId} />
-            <div className="flex-1">
+            <div className="flex-1 flex flex-col">
                 <Navbar orgId={orgId} />
-                <div className="p-8">
+                <div className="flex-1 p-8 overflow-auto">
                     <div className="flex justify-between items-center mb-6">
                         <h1 className="text-2xl font-bold text-gray-900">{t('meetings.title')}</h1>
                         <div className="flex gap-3">

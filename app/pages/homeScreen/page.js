@@ -246,9 +246,9 @@ export default function Home() {
     return (
         <div className="flex">
             <Sidebar orgId={orgId} />
-            <div className="flex-1">
+            <div className="flex-1 ">
                 <Navbar orgId={orgId} />
-                <div className="p-6 bg-gray-50  min-h-screen">
+                <div className=" p-6 bg-gray-50  min-h-screen">
                     {/* Welcome Section */}
                     <div className="bg-linear-to-br from-green-600 to-green-400  rounded-xl p-6 mb-6 text-white">
                         <h1 className="text-3xl font-bold mb-2">
