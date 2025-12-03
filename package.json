@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@react-google-maps/api": "^2.20.7",
     "firebase": "^12.5.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.3",
