@@ -39,18 +39,38 @@ const InteractiveMap = ({
 
   // Валидация и мемоизация центра карты
   const validCenter = useMemo(() => {
+    // Если есть локации, вычисляем центр автоматически
+    if (locations && locations.length > 0) {
+        const validLocs = locations.filter(loc => {
+            const lat = Number(loc.latitude);
+            const lng = Number(loc.longitude);
+            return !isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng);
+        });
+        
+        if (validLocs.length > 0) {
+            const lats = validLocs.map(loc => Number(loc.latitude));
+            const lngs = validLocs.map(loc => Number(loc.longitude));
+            
+            return {
+                lat: lats.reduce((a, b) => a + b) / lats.length,
+                lng: lngs.reduce((a, b) => a + b) / lngs.length
+            };
+        }
+    }
+    
+    // Если передан центр извне
     if (center && typeof center === 'object') {
-      const lat = Number(center.lat);
-      const lng = Number(center.lng);
-      
-      if (!isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng)) {
-        return { lat, lng };
-      }
+        const lat = Number(center.lat);
+        const lng = Number(center.lng);
+        
+        if (!isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng)) {
+            return { lat, lng };
+        }
     }
     
     // Дефолтный центр - Ташкент
     return { lat: 41.2995, lng: 69.2401 };
-  }, [center]);
+  }, [center, locations]); // Добавлен locations в зависимости
 
   const mapContainerStyle = {
     width: '100%',
@@ -124,12 +144,19 @@ const InteractiveMap = ({
           }
         } else if (validLocations > 1) {
           map.fitBounds(bounds);
+          // Добавляем небольшой отступ после fitBounds
+          setTimeout(() => {
+            const currentZoom = map.getZoom();
+            if (currentZoom > 15) {
+                map.setZoom(15);
+            }
+          }, 100);
         }
       } catch (error) {
         console.error('Error fitting bounds:', error);
       }
     }
-  }, [map, locations]);
+  }, [map, locations]); // Убедитесь что locations в зависимостях
 
   // Очищаем временный маркер при изменении локаций
   useEffect(() => {

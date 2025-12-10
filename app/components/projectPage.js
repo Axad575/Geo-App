@@ -136,16 +136,26 @@ const ProjectPage = ({ projectId, orgId }) => {
 
     const getMapCenter = () => {
         if (!project.locations || project.locations.length === 0) {
-            return [41.291111, 69.240556];
+            return { lat: 41.2995, lng: 69.2401 }; // Изменено с массива на объект
         }
         
-        const lats = project.locations.map(loc => Number(loc.latitude));
-        const lngs = project.locations.map(loc => Number(loc.longitude));
+        const validLocations = project.locations.filter(loc => {
+            const lat = Number(loc.latitude);
+            const lng = Number(loc.longitude);
+            return !isNaN(lat) && !isNaN(lng) && isFinite(lat) && isFinite(lng);
+        });
         
-        return [
-            lats.reduce((a, b) => a + b) / lats.length,
-            lngs.reduce((a, b) => a + b) / lngs.length
-        ];
+        if (validLocations.length === 0) {
+            return { lat: 41.2995, lng: 69.2401 };
+        }
+        
+        const lats = validLocations.map(loc => Number(loc.latitude));
+        const lngs = validLocations.map(loc => Number(loc.longitude));
+        
+        return {
+            lat: lats.reduce((a, b) => a + b) / lats.length,
+            lng: lngs.reduce((a, b) => a + b) / lngs.length
+        };
     };
 
     const decimalToDMS = (decimal, isLatitude = true) => {
@@ -665,8 +675,8 @@ const ProjectPage = ({ projectId, orgId }) => {
                                 locations={project.locations || []}
                                 onLocationClick={handleLocationClick}
                                 onMapClick={handleMapClick}
-                                center={getMapCenter()}
-                                zoom={project.locations && project.locations.length > 0 ? 15 : 6}
+                                center={getMapCenter()} // Теперь возвращает { lat, lng }
+                                zoom={project.locations && project.locations.length > 0 ? 13 : 10} // Увеличил zoom для лучшего просмотра
                                 height="450px"
                             />
                         </div>
