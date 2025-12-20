@@ -1,20 +1,28 @@
+# ---
+# deployment:
+#   tasks: 
+#     - export DEPLOYPATH=/home/geonoteu/public_html/geo-app
+    
+#     # Создание директории и копирование
+#     - /bin/mkdir -p $DEPLOYPATH
+#     - /bin/cp -R * $DEPLOYPATH
+    
+#     # Переход в директорию
+#     - cd $DEPLOYPATH
+    
+#     # Установка зависимостей
+#     - npm install
+    
+#     # Сборка Next.js
+#     - npm run build
+    
+#     # Перезапуск через cPanel Node.js App
+#     - touch $DEPLOYPATH/tmp/restart.txt
+
 ---
 deployment:
-  tasks: 
-    - export DEPLOYPATH=/home/geonoteu/public_html/geo-app
-    
-    # Создание директории и копирование
-    - /bin/mkdir -p $DEPLOYPATH
-    - /bin/cp -R * $DEPLOYPATH
-    
-    # Переход в директорию
-    - cd $DEPLOYPATH
-    
-    # Установка зависимостей
-    - npm install
-    
-    # Сборка Next.js
-    - npm run build
-    
-    # Перезапуск через cPanel Node.js App
-    - touch $DEPLOYPATH/tmp/restart.txt
+
+   tasks:
+
+      - export DEPLOYPATH=/home/geonoteu/geonote.uz/
+      - /bin/cp -R * $DEPLOYPATH
