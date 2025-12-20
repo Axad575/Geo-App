@@ -1,6 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
-};
+  // Укажите правильный корневой каталог
+  turbopack: {
+    root: '. /',
+  },
+  // Отключите минификацию при сборке для экономии памяти
+  swcMinify: false,
+  // Уменьшите использование памяти
+  experimental: {
+    workerThreads: false,
+    cpus: 1
+  }
+}
 
-export default nextConfig;
+export default nextConfig
