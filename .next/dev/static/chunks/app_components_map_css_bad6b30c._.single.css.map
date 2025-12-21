@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 1, "column": 0}, "map": {"version":3,"sources":["turbopack:///[project]/app/components/map.css"],"sourcesContent":["/* Дополнительные стили для карты */\r\n.leaflet-container {\r\n  border-radius: 0.5rem;\r\n}\r\n\r\n/* Стили для popup'ов */\r\n.leaflet-popup-content-wrapper {\r\n  border-radius: 8px;\r\n  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);\r\n}\r\n\r\n.leaflet-popup-tip {\r\n  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);\r\n}\r\n\r\n/* Убираем outline у карты при фокусе */\r\n.leaflet-container:focus {\r\n  outline: none;\r\n}\r\n\r\n/* Стили для кнопок управления картой */\r\n.leaflet-control-zoom a {\r\n  border-radius: 4px;\r\n}\r\n\r\n.leaflet-control-zoom a:first-child {\r\n  border-bottom: 1px solid #ccc;\r\n}\r\n\r\n/* Адаптивность карты */\r\n@media (max-width: 768px) {\r\n  .leaflet-control-zoom {\r\n    margin-left: 5px !important;\r\n    margin-top: 5px !important;\r\n  }\r\n}"],"names":[],"mappings":"AACA;;;;AAKA;;;;;AAKA;;;;AAKA;;;;AAKA;;;;AAIA;;;;AAKA;EACE"}}]
+}

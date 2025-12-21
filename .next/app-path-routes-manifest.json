@@ -1,0 +1,19 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/icon.png/route": "/icon.png",
+  "/page": "/",
+  "/pages/homeScreen/page": "/pages/homeScreen",
+  "/pages/meetings/page": "/pages/meetings",
+  "/pages/news/page": "/pages/news",
+  "/pages/noSubscription/page": "/pages/noSubscription",
+  "/pages/notes/page": "/pages/notes",
+  "/pages/projects/[id]/notes/[noteId]/edit/page": "/pages/projects/[id]/notes/[noteId]/edit",
+  "/pages/projects/[id]/notes/[noteId]/page": "/pages/projects/[id]/notes/[noteId]",
+  "/pages/projects/[id]/notes/create/page": "/pages/projects/[id]/notes/create",
+  "/pages/projects/[id]/page": "/pages/projects/[id]",
+  "/pages/projects/[id]/tasks/page": "/pages/projects/[id]/tasks",
+  "/pages/projects/page": "/pages/projects",
+  "/pages/settings/page": "/pages/settings",
+  "/pages/tickets/page": "/pages/tickets"
+}
