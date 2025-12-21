@@ -1,3 +1,0 @@
-:HL["/_next/static/chunks/43b727fb21c82132.css","style"]
-:HL["https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined","style"]
-0:{"buildId":"SxnOB6l7KF19jb8ajwSiN","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"pages","paramType":null,"paramKey":"pages","hasRuntimePrefetch":false,"slots":{"children":{"name":"tickets","paramType":null,"paramKey":"tickets","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":false}},"isRootLayout":true},"staleTime":300}

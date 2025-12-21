@@ -1,3 +1,0 @@
-module.exports=[62925,a=>{"use strict";var b=a.i(7997);function c({children:a}){return(0,b.jsxs)("html",{lang:"en",children:[(0,b.jsx)("head",{children:(0,b.jsx)("link",{href:"https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined",rel:"stylesheet"})}),(0,b.jsx)("body",{children:a})]})}a.s(["default",()=>c,"metadata",0,{title:"Geo-Note",description:"Geo-Note is a modern, full-stack web application designed for efficient team collaboration, meeting management, and personal note-taking"}])}];
-
-//# sourceMappingURL=app_layout_5a7e0b9f.js.map
