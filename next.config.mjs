@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Укажите правильный корневой каталог
+  compress: true,
+  poweredByHeader: false,
+  // Для production
+  reactStrictMode: true,
 }
 
 export default nextConfig
